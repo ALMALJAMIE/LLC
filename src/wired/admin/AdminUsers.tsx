@@ -90,6 +90,7 @@ function ManageUser({ u, onClose, onDone }: { u: Profile; onClose: () => void; o
     if (u.id === me?.id && f.role !== 'admin') return toast.err('You cannot remove your own admin role.');
     setBusy(true);
     const { error } = await supabase.from('profiles').update({ ...f, phone: f.phone || null }).eq('id', u.id);
+    if (!error && f.role === 'agent') await supabase.from('agent_profiles').upsert({ id: u.id, status: 'approved' }, { onConflict: 'id' });
     setBusy(false);
     if (error) toast.err(error.message); else { toast.ok('User updated'); onDone(); }
   };
@@ -127,6 +128,7 @@ function AddUser({ onClose, onDone }: { onClose: () => void; onDone: () => void 
       await new Promise((r) => setTimeout(r, 600));
       const up = await supabase.from('profiles').update({ role: f.role }).eq('id', data.user.id);
       if (up.error) toast.err(`Created, but role not set: ${up.error.message}`);
+      else if (f.role === 'agent') await supabase.from('agent_profiles').upsert({ id: data.user.id, status: 'approved' }, { onConflict: 'id' });
     }
     setBusy(false);
     toast.ok('User created. They must confirm their email before signing in.');

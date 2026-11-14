@@ -77,7 +77,8 @@ create or replace function public.guard_profile_update() returns trigger
   language plpgsql security definer set search_path = public as
 $$
 begin
-  if not public.is_admin() then
+  -- auth.uid() is null when run from the SQL editor / service role: allow those changes.
+  if auth.uid() is not null and not public.is_admin() then
     new.role := old.role;
     new.is_active := old.is_active;
     new.student_no := old.student_no;

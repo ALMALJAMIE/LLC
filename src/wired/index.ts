@@ -5,6 +5,9 @@ type C = ReturnType<typeof lazy>;
 const ManageProfile = lazy(() => import('./shared/ManageProfile'));
 const TaskManager = lazy(() => import('./shared/TaskManager'));
 const AcademicCalendar = lazy(() => import('./shared/AcademicCalendar'));
+const ClassScheduler = lazy(() => import('./shared/ClassScheduler'));
+const AbsenceApprovals = lazy(() => import('./shared/AbsenceApprovals'));
+const named = <K extends string>(loader: () => Promise<Record<K, React.ComponentType>>, k: K) => lazy(() => loader().then((m) => ({ default: m[k] })));
 
 /** Screens that are connected to the database. They replace the static layout for the same route. */
 export const WIRED: Record<string, Partial<Record<Role, C>>> = {
@@ -23,6 +26,21 @@ export const WIRED: Record<string, Partial<Record<Role, C>>> = {
   '/student/exam-results': { student: lazy(() => import('./student/StudentResults')) },
   '/student/certificates': { student: lazy(() => import('./student/StudentCertificates')) },
   '/student/reviews': { student: lazy(() => import('./student/StudentReviews')) },
+  '/admin-dashboard': { admin: lazy(() => import('./admin/AdminDashboard')) },
+  '/admin-users': { admin: lazy(() => import('./admin/AdminUsers')) },
+  '/admin-enrollments': { admin: lazy(() => import('./admin/AdminEnrollments')) },
+  '/admin-financials': { admin: lazy(() => import('./admin/AdminFinancials')) },
+  '/admin-categories': { admin: named(() => import('./admin/Taxonomy'), 'AdminCategories') },
+  '/admin-levels': { admin: named(() => import('./admin/Taxonomy'), 'AdminLevels') },
+  '/admin-academic-session': { admin: named(() => import('./admin/Taxonomy'), 'AdminSessions') },
+  '/admin-courses': { admin: named(() => import('./admin/Courses'), 'AdminCourses') },
+  '/admin-batches': { admin: named(() => import('./admin/Courses'), 'AdminBatches') },
+  '/admin/timetable': { admin: ClassScheduler },
+  '/admin/absence-approvals': { admin: AbsenceApprovals },
+  '/admin-reviews': { admin: named(() => import('./admin/AdminMisc'), 'AdminReviews') },
+  '/admin-certificate-templates': { admin: named(() => import('./admin/AdminMisc'), 'AdminCertificates') },
+  '/admin/enroll-student': { admin: named(() => import('./admin/AdminMisc'), 'AdminEnrollStudent') },
+  '/admin/new-students': { admin: named(() => import('./admin/AdminMisc'), 'AdminNewStudents') },
   '/student/courses': { student: lazy(() => import('./student/StudentCourses')) },
   '/student/my-learning': { student: lazy(() => import('./student/StudentMyLearning')) },
   '/student/finances': { student: lazy(() => import('./student/StudentFinances')) },

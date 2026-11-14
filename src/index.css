@@ -1,0 +1,63 @@
+@import "tailwindcss";
+@import "animate.css";
+@import "./styles/vendor.css";
+
+/*
+ * LLC identity mapped onto the reference palette:
+ *  - indigo (primary)  -> LLC royal blue (from the logo)
+ *  - orange (accent)   -> LLC gold (from the logo)
+ *  - dark sidebar      -> LLC navy (handled in markup)
+ */
+@theme {
+  --font-sans: "Poppins", sans-serif;
+  --font-brand: "Montserrat", "Poppins", sans-serif;
+
+  --color-indigo-50: #eef4fc;
+  --color-indigo-100: #d9e6f8;
+  --color-indigo-200: #b3cdf0;
+  --color-indigo-300: #7eaae4;
+  --color-indigo-400: #4a86d6;
+  --color-indigo-500: #1f66c8;
+  --color-indigo-600: #0f4ca7;
+  --color-indigo-700: #0c3d88;
+  --color-indigo-800: #0b326d;
+  --color-indigo-900: #0a2852;
+  --color-indigo-950: #061a37;
+
+  --color-orange-50: #fdf8e9;
+  --color-orange-100: #fbeec6;
+  --color-orange-200: #f7dc8a;
+  --color-orange-300: #f3c74d;
+  --color-orange-400: #efb52a;
+  --color-orange-500: #e9a823;
+  --color-orange-600: #c98f17;
+  --color-orange-700: #a37213;
+  --color-orange-800: #845b13;
+  --color-orange-900: #6b4a12;
+  --color-orange-950: #3d2a0a;
+
+  --color-ilc-orange: #e9a823;
+  --color-ilc-dark: #0b1a3a;
+
+  --animate-wave: wave 2.4s ease-in-out infinite;
+  @keyframes wave {
+    0%, 60%, 100% { transform: rotate(0deg); }
+    10%, 30% { transform: rotate(14deg); }
+    20% { transform: rotate(-8deg); }
+    40% { transform: rotate(-4deg); }
+    50% { transform: rotate(10deg); }
+  }
+}
+
+html, body, #root { height: 100%; }
+body { font-family: var(--font-sans); background-color: #fafafa; color: #1e293b; }
+
+.sidebar-scrollbar::-webkit-scrollbar { width: 4px; }
+.sidebar-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.sidebar-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgb(203, 213, 225); border-radius: 10px; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+button { cursor: pointer; }

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from './auth';
 
 /** Tiny data hook: runs `fn` when the user is ready; returns data, loading, error and reload. */
-export function useData<T>(fn: () => PromiseLike<{ data: T | null; error: { message: string } | null }>, deps: unknown[] = []) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useData<T>(fn: () => PromiseLike<{ data: any; error: { message: string } | null }>, deps: unknown[] = []) {
   const user = useAuth((s) => s.user);
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -11,7 +12,7 @@ export function useData<T>(fn: () => PromiseLike<{ data: T | null; error: { mess
     if (!user || user.demo) { setData(null); setLoading(false); return; }
     setLoading(true);
     const res = await fn();
-    setData(res.data);
+    setData(res.data as T);
     setError(res.error?.message ?? null);
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps

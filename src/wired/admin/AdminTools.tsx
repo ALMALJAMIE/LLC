@@ -258,13 +258,13 @@ export function AdminMasterTimetable() {
 }
 
 // ---------------- Live sessions (online) ----------------
-type Ls = { id: number; title: string; starts_at: string; ends_at: string; meeting_url: string | null; batch: { name: string; instructor: { full_name: string } | null } | null };
+type Ls = { id: number; title: string; starts_at: string; ends_at: string; meeting_url: string | null; batch: { name: string; instructor: { full_name: string } | null } | null; substitute: { full_name: string } | null };
 export function AdminLiveSessions() {
   const user = useAuth((s) => s.user);
   const [edit, setEdit] = useState<Ls | null>(null);
   const [url, setUrl] = useState('');
   const since = new Date(Date.now() - 3 * 3600e3).toISOString();
-  const { data, loading, reload } = useData<Ls[]>(() => supabase.from('class_sessions').select('id,title,starts_at,ends_at,meeting_url, batch:batches(name, instructor:profiles(full_name))').eq('mode', 'online').gte('ends_at', since).order('starts_at').limit(60));
+  const { data, loading, reload } = useData<Ls[]>(() => supabase.from('class_sessions').select('id,title,starts_at,ends_at,meeting_url, batch:batches(name, instructor:profiles(full_name)), substitute:profiles!class_sessions_substitute_id_fkey(full_name)').eq('mode', 'online').gte('ends_at', since).order('starts_at').limit(60));
   const now = Date.now();
   const live = (data ?? []).filter((s) => new Date(s.starts_at).getTime() <= now && new Date(s.ends_at).getTime() >= now);
   const next = (data ?? []).filter((s) => new Date(s.starts_at).getTime() > now);
@@ -280,7 +280,7 @@ export function AdminLiveSessions() {
         {isLive && <span className="flex items-center gap-1 text-[10px] font-black uppercase text-red-600 bg-red-50 px-2 py-0.5 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />Live</span>}
       </div>
       <p className="font-extrabold text-slate-900 mt-2">{s.title}</p>
-      <p className="text-xs text-slate-500">{s.batch?.name} · {s.batch?.instructor?.full_name ?? 'No instructor'}</p>
+      <p className="text-xs text-slate-500">{s.batch?.name} · {s.substitute ? <b className="text-purple-600">Cover: {s.substitute.full_name}</b> : s.batch?.instructor?.full_name ?? 'No instructor'}</p>
       <div className="flex items-center gap-2 mt-4">
         {s.meeting_url ? <a href={s.meeting_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold"><Video size={14} />Join</a> : <span className="text-xs font-bold text-amber-600 flex items-center gap-1"><AlertTriangle size={12} />No meeting link</span>}
         <button disabled={user?.demo} onClick={() => { setEdit(s); setUrl(s.meeting_url ?? ''); }} className="ml-auto text-xs font-bold text-slate-500 hover:text-orange-600 disabled:opacity-50">Edit link</button>

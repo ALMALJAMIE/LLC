@@ -129,7 +129,7 @@ export function InstructorLiveAttendance() {
   const ids = (batches.data ?? []).map((b) => b.id);
   const start = new Date(); start.setHours(0, 0, 0, 0);
   const end = new Date(start); end.setDate(end.getDate() + 1);
-  const sessions = useData<Sess[]>(() => supabase.from('class_sessions').select('*, batch:batches(name)').in('batch_id', ids.length ? ids : [0]).gte('starts_at', start.toISOString()).lt('starts_at', end.toISOString()).order('starts_at'), [ids.join(',')]);
+  const sessions = useData<Sess[]>(() => supabase.from('class_sessions').select('*, batch:batches(name)').or(`batch_id.in.(${ids.length ? ids.join(',') : 0}),substitute_id.eq.${user?.id}`).gte('starts_at', start.toISOString()).lt('starts_at', end.toISOString()).order('starts_at'), [ids.join(',')]);
   const [open, setOpen] = useState<Sess | null>(null);
   return (
     <Page>

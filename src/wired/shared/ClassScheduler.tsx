@@ -77,7 +77,7 @@ export default function ClassScheduler({ title = 'Timetable Management', badge =
 
 function Generate({ batch, onClose, onDone }: { batch: B; onClose: () => void; onDone: () => void }) {
   const today = new Date().toISOString().slice(0, 10);
-  const [f, setF] = useState({ title: 'Class', days: [0, 2] as number[], start: '09:00', end: '10:30', from: batch.start_date && batch.start_date > today ? batch.start_date : today, to: batch.end_date ?? today, mode: batch.mode === 'face_to_face' ? 'face_to_face' : 'online', room: '', url: '' });
+  const [f, setF] = useState({ title: '', days: [0, 2] as number[], start: '09:00', end: '10:30', from: batch.start_date && batch.start_date > today ? batch.start_date : today, to: batch.end_date ?? today, mode: batch.mode === 'face_to_face' ? 'face_to_face' : 'online', room: '', url: '' });
   const [busy, setBusy] = useState(false);
   const rows = useMemo(() => {
     const out: { starts_at: string; ends_at: string }[] = [];
@@ -93,7 +93,7 @@ function Generate({ batch, onClose, onDone }: { batch: B; onClose: () => void; o
   const save = async () => {
     if (!rows.length) return toast.err('No dates match. Check days and dates.');
     setBusy(true);
-    const { error } = await supabase.from('class_sessions').insert(rows.map((r) => ({ batch_id: batch.id, title: f.title, mode: f.mode, room: f.room || null, meeting_url: f.url || null, ...r })));
+    const { error } = await supabase.from('class_sessions').insert(rows.map((r) => ({ batch_id: batch.id, title: f.title.trim() || 'Class', mode: f.mode, room: f.room || null, meeting_url: f.url || null, ...r })));
     setBusy(false);
     if (error) toast.err(error.message); else { toast.ok(`${rows.length} classes added`); onDone(); }
   };

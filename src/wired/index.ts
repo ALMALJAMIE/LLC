@@ -112,3 +112,25 @@ export const WIRED: Record<string, Partial<Record<Role, C>>> = {
   '/student/class-report': { student: named(() => import('./student/StudentReports'), 'StudentClassReport') },
   '/student/language-report': { student: named(() => import('./student/StudentReports'), 'StudentLanguageReport') },
 };
+
+// ---------------- Academic supervisor ----------------
+// Their own pages…
+Object.assign(WIRED, {
+  '/academic-dashboard': { academic: lazy(() => import('./academic/AcademicDashboard')) },
+  '/academic/toolkit': { academic: Toolkit },
+  '/academic/reminders': { academic: TaskManager },
+  '/academic/community': { academic: named(() => import('./community/Community'), 'CommunityAccess') },
+  '/academic/community/feed/:hub': { academic: named(() => import('./community/Community'), 'CommunityHub') },
+});
+// …and the admin's academic pages, shared with the same screens. Money, users, agents, CMS and the audit log stay admin-only.
+for (const path of [
+  '/manage-profile', '/academic-calendar', '/admin/live-sessions',
+  '/admin-academic-session', '/admin-categories', '/admin-levels', '/admin-courses', '/admin-batches',
+  '/admin-curriculum', '/admin/lessons/review', '/admin/timetable', '/admin/master-timetable', '/admin/substitutes', '/admin/absence-approvals',
+  '/admin-placement-tests', '/admin-placement-tests/:id/manage', '/admin/level-config', '/admin-placement-requests',
+  '/admin/exam-templates', '/admin-grading-scales', '/admin-rubrics-bank', '/admin-certificate-templates', '/admin-reviews',
+]) {
+  const c = WIRED[path]?.admin;
+  if (c) WIRED[path] = { ...WIRED[path], academic: c };
+  else console.warn('academic route has no admin screen:', path);
+}

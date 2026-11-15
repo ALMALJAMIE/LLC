@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, BrainCircuit, Check, Clock, ListChecks, Loader2, Plus, RotateCcw, Save, SquarePen, Trash2 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
+import { isAcademicLead } from '../../lib/nav';
 import { supabase } from '../../lib/supabase';
 import { fmtDateTime, useData } from '../../lib/db';
 import { DemoNotice, Field, Modal, Page, PageHero, Spinner, StatusPill, btnPrimary, inputCls, toast } from '../../components/ui';
@@ -9,7 +10,7 @@ import EntityGrid from '../admin/EntityGrid';
 import { notify } from '../admin/AdminEnrollments';
 
 type T = { id: number; title: string; description: string | null; duration_min: number; is_active: boolean; placement_questions: { count: number }[] };
-const base = (role: string) => (role === 'admin' ? '/admin-placement-tests' : '/instructor/placement-tests');
+const base = (role: string) => (role === 'admin' || role === 'academic' ? '/admin-placement-tests' : '/instructor/placement-tests');
 
 export function PlacementTestsAdmin() {
   const user = useAuth((s) => s.user)!;
@@ -135,7 +136,7 @@ export function LevelConfig() {
             <span className="col-span-1 text-slate-400 text-sm">%</span>
           </div>
         ))}
-        <button disabled={busy || user.role !== 'admin'} onClick={save} className={`${btnPrimary} w-full mt-5`}>{busy ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save Bands</button>
+        <button disabled={busy || !isAcademicLead(user.role)} onClick={save} className={`${btnPrimary} w-full mt-5`}>{busy ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save Bands</button>
       </div>
     </Page>
   );

@@ -1,5 +1,6 @@
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/auth';
+import { isAcademicLead } from '../../lib/nav';
 import { useData } from '../../lib/db';
 
 export type TBatch = { id: number; code: string; name: string; start_date: string | null; end_date: string | null; capacity: number; mode: string; status: string; course_id: number; course: { title: string; code: string } | null };
@@ -10,7 +11,7 @@ export function useTeaching(statuses = ['upcoming', 'active']) {
   const user = useAuth((s) => s.user);
   return useData<TBatch[]>(() => {
     let q = supabase.from('batches').select('id,code,name,start_date,end_date,capacity,mode,status,course_id, course:courses(title,code)').in('status', statuses).order('start_date', { ascending: false });
-    if (user?.role !== 'admin') q = q.eq('instructor_id', user!.id);
+    if (!isAcademicLead(user?.role)) q = q.eq('instructor_id', user!.id);
     return q;
   });
 }

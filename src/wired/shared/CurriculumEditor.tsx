@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, BookOpen, Clock, Eye, FileText, Loader2, Plus, Send, SquarePen, Trash2, Video } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
+import { isAcademicLead } from '../../lib/nav';
 import { supabase } from '../../lib/supabase';
 import { useData } from '../../lib/db';
 import { DemoNotice, Field, Modal, Page, PageHero, Spinner, StatusPill, btnGhost, btnPrimary, inputCls, toast } from '../../components/ui';
@@ -12,7 +13,7 @@ type Unit = { id: number; course_id: number; title: string; sort_order: number; 
 /** Course → units → lessons editor. Admins publish directly; instructors submit lessons for approval. */
 export default function CurriculumEditor() {
   const user = useAuth((s) => s.user)!;
-  const admin = user.role === 'admin';
+  const admin = isAcademicLead(user.role);
   const courses = useData<{ id: number; title: string; code: string }[]>(async () => {
     if (admin) return supabase.from('courses').select('id,title,code').order('code');
     const b = await supabase.from('batches').select('course:courses(id,title,code)').eq('instructor_id', user.id);
@@ -101,7 +102,7 @@ export default function CurriculumEditor() {
 
 function LessonForm({ lesson, onClose, onDone }: { lesson: Partial<Lesson>; onClose: () => void; onDone: () => void }) {
   const user = useAuth((s) => s.user)!;
-  const admin = user.role === 'admin';
+  const admin = isAcademicLead(user.role);
   const [f, setF] = useState({ title: lesson.title ?? '', video_url: lesson.video_url ?? '', resource_url: lesson.resource_url ?? '', duration_min: lesson.duration_min ? String(lesson.duration_min) : '', content: lesson.content ?? '' });
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState(false);

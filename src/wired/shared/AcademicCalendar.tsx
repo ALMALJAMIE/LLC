@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CalendarDays, Funnel, Loader2, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
+import { isAcademicLead } from '../../lib/nav';
 import { supabase } from '../../lib/supabase';
 import { useData } from '../../lib/db';
 import { Illus } from '../../components/media';
@@ -18,7 +19,7 @@ const long = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US'
 
 export default function AcademicCalendar() {
   const user = useAuth((s) => s.user);
-  const admin = user?.role === 'admin' && !user.demo;
+  const admin = isAcademicLead(user?.role) && !user?.demo;
   const [q, setQ] = useState('');
   const [kind, setKind] = useState('all');
   const [edit, setEdit] = useState<Partial<Ev> | null>(null);

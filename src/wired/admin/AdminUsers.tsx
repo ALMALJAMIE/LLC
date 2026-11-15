@@ -3,11 +3,12 @@ import { createClient } from '@supabase/supabase-js';
 import { Archive, ArchiveRestore, ChevronLeft, ChevronRight, CircleCheck, CircleX, Filter, Loader2, Mail, Phone, Plus, Search, Settings, Users } from 'lucide-react';
 import { useAuth, type Profile } from '../../lib/auth';
 import { SUPABASE_KEY, SUPABASE_URL, supabase } from '../../lib/supabase';
+import { ROLE_LABEL } from '../../lib/nav';
 import { fmtDate, useData } from '../../lib/db';
 import { Illus } from '../../components/media';
 import { DemoNotice, Field, Modal, Spinner, btnPrimary, inputCls, toast } from '../../components/ui';
 
-const ROLES = ['student', 'instructor', 'agent', 'admin'] as const;
+const ROLES = ['student', 'instructor', 'academic', 'agent', 'admin'] as const;
 
 export default function AdminUsers() {
   const me = useAuth((s) => s.user);
@@ -42,7 +43,7 @@ export default function AdminUsers() {
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1"><Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" /><input value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search users..." className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-200" /></div>
               <div className="relative"><Filter size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <select value={role} onChange={(e) => { setRole(e.target.value); setPage(1); }} className="pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 outline-none capitalize"><option value="all">All Roles</option>{ROLES.map((r) => <option key={r} value={r}>{r}</option>)}</select></div>
+                <select value={role} onChange={(e) => { setRole(e.target.value); setPage(1); }} className="pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 outline-none capitalize"><option value="all">All Roles</option>{ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select></div>
               <button disabled={me?.demo} onClick={() => setAdding(true)} className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-900 hover:bg-orange-500 text-white text-sm font-bold disabled:opacity-50"><Plus size={16} /> Add User</button>
             </div>
           </div>
@@ -104,7 +105,7 @@ function ManageUser({ u, onClose, onDone }: { u: Profile; onClose: () => void; o
         <p className="text-sm text-slate-500">{u.email} · joined {fmtDate(u.created_at)}</p>
         <Field label="Full name"><input className={inputCls} value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} /></Field>
         <Field label="Phone"><input className={inputCls} value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>
-        <Field label="Role"><select className={`${inputCls} capitalize`} value={f.role} onChange={(e) => setF({ ...f, role: e.target.value as Profile['role'] })}>{ROLES.map((r) => <option key={r} value={r}>{r}</option>)}</select></Field>
+        <Field label="Role"><select className={`${inputCls} capitalize`} value={f.role} onChange={(e) => setF({ ...f, role: e.target.value as Profile['role'] })}>{ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select></Field>
         <label className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold"><input type="checkbox" className="accent-orange-500 w-4 h-4" checked={f.is_active} onChange={(e) => setF({ ...f, is_active: e.target.checked })} /> Account active</label>
         <div className="flex gap-2"><button onClick={reset} className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 hover:bg-slate-50">Send password reset</button>
           <button disabled={busy} onClick={save} className={`${btnPrimary} flex-1`}>{busy && <Loader2 size={16} className="animate-spin" />} Save</button></div>
@@ -141,7 +142,7 @@ function AddUser({ onClose, onDone }: { onClose: () => void; onDone: () => void 
         <Field label="Email"><input required type="email" className={inputCls} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Phone"><input className={inputCls} value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>
-          <Field label="Role"><select className={`${inputCls} capitalize`} value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })}>{ROLES.map((r) => <option key={r} value={r}>{r}</option>)}</select></Field>
+          <Field label="Role"><select className={`${inputCls} capitalize`} value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })}>{ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select></Field>
         </div>
         <Field label="Temporary password" hint="Share it with the user; they can change it from My Profile."><input required className={inputCls} value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></Field>
         <button disabled={busy} className={`${btnPrimary} w-full`}>{busy && <Loader2 size={16} className="animate-spin" />} Create User</button>

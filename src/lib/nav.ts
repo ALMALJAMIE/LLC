@@ -6,12 +6,14 @@ import {
   SquareCheckBig, SquarePen, Star, Tag, UserCog, UserPlus, Users, Video, Wallet,
 } from 'lucide-react';
 
-export type Role = 'student' | 'instructor' | 'agent' | 'admin';
+export type Role = 'student' | 'instructor' | 'agent' | 'admin' | 'academic';
+/** Admin or academic supervisor: runs the academic side (courses, batches, lessons, exams, placement…). */
+export const isAcademicLead = (r?: Role | null) => r === 'admin' || r === 'academic';
 export type NavItem = { label: string; icon: LucideIcon; to?: string; children?: NavItem[] };
 
-export const ROLE_LABEL: Record<Role, string> = { student: 'Student', instructor: 'Instructor', agent: 'Agent', admin: 'Admin' };
+export const ROLE_LABEL: Record<Role, string> = { student: 'Student', instructor: 'Instructor', agent: 'Agent', admin: 'Admin', academic: 'Academic Supervisor' };
 export const ROLE_HOME: Record<Role, string> = {
-  student: '/student-dashboard', instructor: '/instructor-dashboard', agent: '/agent-dashboard', admin: '/admin-dashboard',
+  student: '/student-dashboard', instructor: '/instructor-dashboard', agent: '/agent-dashboard', admin: '/admin-dashboard', academic: '/academic-dashboard',
 };
 
 export const NAV: Record<Role, NavItem[]> = {
@@ -70,6 +72,46 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: 'Bank Details', icon: Building2, to: '/agent/bank-details' },
     { label: 'Form Builder', icon: ClipboardList, to: '/agent/forms' },
     { label: 'My Profile', icon: UserCog, to: '/manage-profile' },
+  ],
+  academic: [
+    { label: 'Dashboard', icon: LayoutDashboard, to: '/academic-dashboard' },
+    { label: 'Toolkit', icon: PenTool, to: '/academic/toolkit' },
+    { label: 'Community', icon: MessageCircle, to: '/academic/community' },
+    { label: 'Task Manager', icon: SquareCheckBig, to: '/academic/reminders' },
+    { label: 'Live Sessions', icon: Video, to: '/admin/live-sessions' },
+    {
+      label: 'Academic Setup', icon: GraduationCap, children: [
+        { label: 'Academic Session', icon: CalendarRange, to: '/admin-academic-session' },
+        { label: 'Academic Calendar', icon: Calendar, to: '/academic-calendar' },
+        { label: 'Categories', icon: Tag, to: '/admin-categories' },
+        { label: 'Batch Levels', icon: ListOrdered, to: '/admin-levels' },
+        { label: 'Courses', icon: BookOpen, to: '/admin-courses' },
+        { label: 'Batches', icon: Layers, to: '/admin-batches' },
+      ],
+    },
+    {
+      label: 'Teaching', icon: NotebookPen, children: [
+        { label: 'Curriculum', icon: NotebookPen, to: '/admin-curriculum' },
+        { label: 'Lesson Approvals', icon: MonitorPlay, to: '/admin/lessons/review' },
+        { label: 'Timetable', icon: Clock, to: '/admin/timetable' },
+        { label: 'Master Schedule', icon: CalendarRange, to: '/admin/master-timetable' },
+        { label: 'Substitute Requests', icon: UserCog, to: '/admin/substitutes' },
+        { label: 'Medical Leave & MC', icon: FileText, to: '/admin/absence-approvals' },
+      ],
+    },
+    {
+      label: 'Assessment', icon: ClipboardCheck, children: [
+        { label: 'Placement Tests', icon: BrainCircuit, to: '/admin-placement-tests' },
+        { label: 'Test Level Config', icon: ListOrdered, to: '/admin/level-config' },
+        { label: 'Placement Results', icon: Inbox, to: '/admin-placement-requests' },
+        { label: 'Exam Templates', icon: ClipboardList, to: '/admin/exam-templates' },
+        { label: 'Exam Grading Scales', icon: Percent, to: '/admin-grading-scales' },
+        { label: 'Rubric Bank', icon: ListChecks, to: '/admin-rubrics-bank' },
+        { label: 'Certificates', icon: Award, to: '/admin-certificate-templates' },
+        { label: 'Reviews', icon: Star, to: '/admin-reviews' },
+      ],
+    },
+    { label: 'Manage Profile', icon: UserCog, to: '/manage-profile' },
   ],
   admin: [
     { label: 'Dashboard', icon: LayoutDashboard, to: '/admin-dashboard' },

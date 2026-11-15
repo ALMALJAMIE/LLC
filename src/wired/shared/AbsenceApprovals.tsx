@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Check, FileText, Paperclip, X } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
+import { isAcademicLead } from '../../lib/nav';
 import { supabase } from '../../lib/supabase';
 import { fmtDate, useData } from '../../lib/db';
 import { DemoNotice, Page, PageHero, Spinner, StatusPill, toast } from '../../components/ui';
@@ -12,7 +13,7 @@ export default function AbsenceApprovals() {
   const user = useAuth((s) => s.user)!;
   const [tab, setTab] = useState('pending');
   const { data, loading, reload } = useData<R[]>(() => supabase.from('absence_requests').select('*, student:profiles!absence_requests_student_id_fkey(id,full_name,student_no), batch:batches(name,instructor_id)').order('created_at', { ascending: false }));
-  const list = (data ?? []).filter((r) => (tab === 'all' || r.status === tab) && (user.role === 'admin' || !r.batch || r.batch.instructor_id === user.id));
+  const list = (data ?? []).filter((r) => (tab === 'all' || r.status === tab) && (isAcademicLead(user.role) || !r.batch || r.batch.instructor_id === user.id));
   const view = async (p: string) => { const { data } = await supabase.storage.from('uploads').createSignedUrl(p, 300); if (data) window.open(data.signedUrl, '_blank'); };
   const decide = async (r: R, status: 'approved' | 'rejected') => {
     const note = status === 'rejected' ? prompt('Reason for rejection (shown to the student):') ?? '' : '';

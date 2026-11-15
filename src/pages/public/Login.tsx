@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Briefcase, GraduationCap, Loader2, Lock, Mail, Presentation, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Briefcase, GraduationCap, Loader2, Lock, Mail, Presentation, ShieldCheck, ClipboardCheck } from 'lucide-react';
 import AuthShell, { authBtn, authInput } from './AuthShell';
 import { DEMO_USERS, useAuth } from '../../lib/auth';
 import { ROLE_HOME, type Role } from '../../lib/nav';
@@ -9,6 +9,7 @@ import { supabase } from '../../lib/supabase';
 const ROLES: { role: Role; label: string; icon: typeof GraduationCap; desc: string }[] = [
   { role: 'student', label: 'Student', icon: GraduationCap, desc: 'Courses, classes, exams' },
   { role: 'instructor', label: 'Instructor', icon: Presentation, desc: 'Batches, lessons, grading' },
+  { role: 'academic', label: 'Academic Supervisor', icon: ClipboardCheck, desc: 'Courses, timetables, approvals' },
   { role: 'agent', label: 'Agent', icon: Briefcase, desc: 'Enrollments & earnings' },
   { role: 'admin', label: 'Admin', icon: ShieldCheck, desc: 'Full platform control' },
 ];
@@ -59,7 +60,7 @@ export default function Login() {
       <div className="flex items-center gap-4 my-8">
         <div className="h-px flex-1 bg-slate-200" /><span className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">Preview portals</span><div className="h-px flex-1 bg-slate-200" />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 [&>*:last-child:nth-child(odd)]:col-span-2">
         {ROLES.map(({ role, label, icon: Icon, desc }) => (
           <button key={role} onClick={() => demo(role)} className="text-left p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-orange-200 transition-all group">
             <span className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 grid place-items-center mb-3 group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors"><Icon size={20} /></span>

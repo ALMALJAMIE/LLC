@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Briefcase, Globe, Hash, Heart, ImagePlus, Loader2, Lock, LockOpen, Megaphone, MessageCircle, Send, ShieldCheck, Trash2, Users, Video, X } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
+import { isAcademicLead } from '../../lib/nav';
 import { supabase } from '../../lib/supabase';
 import { useData } from '../../lib/db';
 import { DemoNotice, Spinner, toast } from '../../components/ui';
@@ -64,7 +65,7 @@ export function CommunityHub() {
   const { hub = 'LANGUAGE' } = useParams();
   const user = useAuth((s) => s.user)!;
   const nav = useNavigate();
-  const staff = user.role === 'admin' || user.role === 'instructor';
+  const staff = user.role === 'admin' || user.role === 'instructor' || user.role === 'academic';
   const chans = useData<Ch[]>(() => supabase.from('community_channels').select('*').eq('hub', hub).order('sort_order').order('name'), [hub]);
   const [cid, setCid] = useState<number | null>(null);
   useEffect(() => { if (!cid && chans.data?.length) setCid(chans.data[0].id); }, [chans.data, cid]);
@@ -89,7 +90,7 @@ export function CommunityHub() {
       if (up.error) { setBusy(false); return toast.err(up.error.message); }
     }
     const { error } = await supabase.from('community_posts').insert({ author_id: user.id, channel_id: cid, channel: hub, body: body.trim(), image_url: path });
-    if (!error && notifyAll && user.role === 'admin') await supabase.rpc('broadcast', { p_title: `📢 ${ch?.name}`, p_body: body.trim().slice(0, 140), p_role: null, p_link: null });
+    if (!error && notifyAll && isAcademicLead(user.role)) await supabase.rpc('broadcast', { p_title: `📢 ${ch?.name}`, p_body: body.trim().slice(0, 140), p_role: null, p_link: null });
     setBusy(false);
     if (error) return toast.err(error.message);
     setBody(''); setImg(null); setNotifyAll(false); posts.reload();
@@ -121,7 +122,7 @@ export function CommunityHub() {
               <div className="flex items-center gap-2 pt-3 border-t border-slate-50">
                 <button onClick={() => fileRef.current?.click()} className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"><ImagePlus size={18} /></button>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => setImg(e.target.files?.[0] ?? null)} />
-                {user.role === 'admin' && ch?.kind === 'announcement' && <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500"><input type="checkbox" checked={notifyAll} onChange={(e) => setNotifyAll(e.target.checked)} className="accent-orange-500" />Notify everyone</label>}
+                {isAcademicLead(user.role) && ch?.kind === 'announcement' && <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500"><input type="checkbox" checked={notifyAll} onChange={(e) => setNotifyAll(e.target.checked)} className="accent-orange-500" />Notify everyone</label>}
                 <button disabled={busy || user.demo || (!body.trim() && !img)} onClick={post} className="ml-auto flex items-center gap-2 px-5 py-2 rounded-xl bg-slate-900 hover:bg-orange-500 text-white text-sm font-bold disabled:opacity-40">{busy ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}Post</button>
               </div>
             </div>
@@ -167,7 +168,7 @@ function PostCard({ p, onChange }: { p: Post; onChange: () => void }) {
       <div className="flex items-center gap-3">
         <span className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 grid place-items-center font-black">{(p.author_name ?? '?')[0]?.toUpperCase()}</span>
         <div className="flex-1"><p className="font-bold text-slate-900 text-sm flex items-center gap-2">{p.author_name ?? 'Member'}<span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${roleTint[p.author_role ?? 'student']}`}>{p.author_role}</span></p><p className="text-[11px] text-slate-400">{ago(p.created_at)}</p></div>
-        {(p.author_id === user.id || user.role === 'admin') && <button onClick={del} className="p-1.5 text-slate-300 hover:text-red-500"><Trash2 size={15} /></button>}
+        {(p.author_id === user.id || isAcademicLead(user.role)) && <button onClick={del} className="p-1.5 text-slate-300 hover:text-red-500"><Trash2 size={15} /></button>}
       </div>
       {p.body && <p className="mt-3 text-slate-700 whitespace-pre-line leading-relaxed">{p.body}</p>}
       {img && <img src={img} alt="" className="mt-3 rounded-2xl max-h-96 w-full object-cover" />}

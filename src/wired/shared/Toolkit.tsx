@@ -55,7 +55,7 @@ export default function Toolkit() {
   const user = useAuth((s) => s.user);
   const [q, setQ] = useState('');
   if (!user) return null;
-  const title = { student: 'Student Toolkit', instructor: 'Teacher Toolkit', agent: 'Agent Toolkit', admin: 'System Toolkit' }[user.role];
+  const title = { student: 'Student Toolkit', instructor: 'Teacher Toolkit', agent: 'Agent Toolkit', admin: 'System Toolkit', academic: 'Academic Toolkit' }[user.role];
   const items = NAV[user.role].filter((n) => !n.to?.includes('toolkit'));
   const groups: [string, NavItem[]][] = [['Main Operations', items.filter((n) => n.to)], ...items.filter((n) => n.children).map((n) => [n.label, n.children!] as [string, NavItem[]])];
   const match = (n: NavItem) => `${n.label} ${DESC[n.to ?? ''] ?? ''}`.toLowerCase().includes(q.toLowerCase());
@@ -63,7 +63,7 @@ export default function Toolkit() {
   return (
     <Page>
       {user.demo && <DemoNotice />}
-      <PageHero badge={`${user.role === 'admin' ? 'Admin Console' : user.role[0].toUpperCase() + user.role.slice(1) + ' Portal'}`} title={title} illus="catalogue" subtitle="Every tool in your portal in one place. Search or pick a card to open it.">
+      <PageHero badge={`${user.role === 'admin' ? 'Admin Console' : user.role === 'academic' ? 'Academic Office' : user.role[0].toUpperCase() + user.role.slice(1) + ' Portal'}`} title={title} illus="catalogue" subtitle="Every tool in your portal in one place. Search or pick a card to open it.">
         <div className="relative max-w-md"><Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search tools..." className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-orange-200" /></div>
       </PageHero>
       {groups.map(([g, list]) => {

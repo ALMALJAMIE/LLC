@@ -313,6 +313,8 @@ export function AgentEarnings() {
   const ap = useAgentProfile();
   const cur = ap.data?.payout_currency ?? 'MYR';
   const e = data ?? [];
+  const nav = useNavigate();
+  const available = sum(e.filter((x) => x.status === 'approved' && !x.payout_id));
   const cards = [
     { l: 'Total Confirmed', v: sum(e.filter((x) => x.status === 'approved' || x.status === 'paid')), icon: TrendingUp, c: 'bg-emerald-50 border-emerald-100 text-emerald-600' },
     { l: 'Pending Clearance', v: sum(e.filter((x) => x.status === 'pending')), icon: Clock, c: 'bg-amber-50 border-amber-100 text-amber-600' },
@@ -324,6 +326,12 @@ export function AgentEarnings() {
       <span className="text-[10px] font-black uppercase text-orange-500">Financial Overview · Payout preference: {cur}</span>
       <h1 className="text-3xl font-extrabold text-slate-900">My Earnings</h1><p className="text-sm text-slate-500 mb-6">Track your commission earnings.</p>
       <div className="grid sm:grid-cols-3 gap-5 mb-6">{cards.map(({ l, v, icon: I, c }) => <div key={l} className={`rounded-3xl border p-5 ${c}`}><I size={20} /><p className="text-xs font-bold mt-3">{l}</p><p className="text-2xl font-black text-slate-900">{money(v, cur)}</p></div>)}</div>
+      {available > 0 && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-slate-900 text-white p-5">
+          <p className="text-sm"><b className="text-orange-300">{money(available, cur)}</b> is ready to withdraw.</p>
+          <button onClick={() => nav('/agent/payouts')} className="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold flex items-center gap-2"><Wallet size={16} />Request Payout</button>
+        </div>
+      )}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-x-auto">
         <table className="w-full text-left text-sm min-w-[640px]"><thead className="bg-slate-50 text-[11px] font-extrabold uppercase text-slate-500"><tr><th className="px-4 py-3">Student</th><th className="px-3 py-3">Course</th><th className="px-3 py-3">Date</th><th className="px-3 py-3">Commission</th><th className="px-3 py-3">Status</th></tr></thead>
           <tbody className="divide-y divide-slate-100">{loading ? <tr><td colSpan={5}><Spinner /></td></tr> : e.map((x) => (

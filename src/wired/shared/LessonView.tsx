@@ -19,18 +19,30 @@ function inline(t: string): ReactNode[] {
 }
 
 /** Minimal, safe text formatting: headings, bullets, bold, paragraphs (no HTML injection). */
+/** Tiny markdown: # / ## headings, - or * bullets, 1. numbered lists, **bold**, *italic*, links.
+ *  Works line by line, so teachers don't need blank lines between blocks. */
 export function RichText({ text }: { text: string }) {
-  const blocks = text.replace(/\r/g, '').split(/\n{2,}/);
+  type B = { k: 'h1' | 'h2' | 'p' | 'ul' | 'ol'; lines: string[] };
+  const blocks: B[] = [];
+  const push = (k: B['k'], l: string) => { const last = blocks[blocks.length - 1]; if (last && last.k === k && (k === 'ul' || k === 'ol' || k === 'p')) last.lines.push(l); else blocks.push({ k, lines: [l] }); };
+  for (const raw of text.replace(/\r/g, '').split('\n')) {
+    const l = raw.trimEnd();
+    if (!l.trim()) { blocks.push({ k: 'p', lines: [] }); continue; } // blank line ends the paragraph
+    let m;
+    if ((m = l.match(/^\s*(#{1,3})\s+(.*)$/))) blocks.push({ k: m[1].length === 1 ? 'h1' : 'h2', lines: [m[2]] });
+    else if ((m = l.match(/^\s*[-*•]\s+(.*)$/))) push('ul', m[1]);
+    else if ((m = l.match(/^\s*\d+[.)]\s+(.*)$/))) push('ol', m[1]);
+    else push('p', l);
+  }
   return (
     <div className="space-y-4 text-slate-700 leading-relaxed">
-      {blocks.map((b, i) => {
-        const lines = b.split('\n');
-        if (lines.every((l) => /^\s*[-*]\s+/.test(l))) return <ul key={i} className="list-disc pl-6 space-y-1">{lines.map((l, j) => <li key={j}>{inline(l.replace(/^\s*[-*]\s+/, ''))}</li>)}</ul>;
-        if (lines.every((l) => /^\s*\d+[.)]\s+/.test(l))) return <ol key={i} className="list-decimal pl-6 space-y-1">{lines.map((l, j) => <li key={j}>{inline(l.replace(/^\s*\d+[.)]\s+/, ''))}</li>)}</ol>;
-        const h = b.match(/^(#{1,3})\s+(.*)$/);
-        if (h && lines.length === 1) return h[1].length === 1 ? <h2 key={i} className="text-2xl font-extrabold text-slate-900">{h[2]}</h2> : <h3 key={i} className="text-lg font-bold text-slate-900">{h[2]}</h3>;
-        return <p key={i}>{lines.map((l, j) => <span key={j}>{inline(l)}{j < lines.length - 1 && <br />}</span>)}</p>;
-      })}
+      {blocks.filter((b) => b.lines.length).map((b, i) =>
+        b.k === 'h1' ? <h2 key={i} className="text-2xl font-extrabold text-slate-900">{inline(b.lines[0])}</h2>
+        : b.k === 'h2' ? <h3 key={i} className="text-lg font-bold text-slate-900">{inline(b.lines[0])}</h3>
+        : b.k === 'ul' ? <ul key={i} className="list-disc pl-6 space-y-1">{b.lines.map((l, j) => <li key={j}>{inline(l)}</li>)}</ul>
+        : b.k === 'ol' ? <ol key={i} className="list-decimal pl-6 space-y-1">{b.lines.map((l, j) => <li key={j}>{inline(l)}</li>)}</ol>
+        : <p key={i}>{b.lines.map((l, j) => <span key={j}>{inline(l)}{j < b.lines.length - 1 && <br />}</span>)}</p>,
+      )}
     </div>
   );
 }

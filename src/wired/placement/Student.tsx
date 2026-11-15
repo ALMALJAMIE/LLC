@@ -79,7 +79,16 @@ export function PlacementTake() {
   const loaded = useRef(false);
   useEffect(() => { if (qs.length && !loaded.current) { loaded.current = true; setAns(qs[0].answers ?? {}); } }, [qs]);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
-  useEffect(() => { const t = setInterval(() => { if (loaded.current && !result) supabase.rpc('save_placement', { p_attempt: aid, p_answers: ans }); }, 20000); return () => clearInterval(t); }, [aid, ans, result]);
+  // Autosave: 1.5 s after the last change, and when the tab is hidden or closed.
+  // (A Supabase query only runs when awaited / .then() is called.)
+  const latest = useRef(ans); latest.current = ans;
+  const save = useCallback(() => { if (loaded.current && !result) supabase.rpc('save_placement', { p_attempt: aid, p_answers: latest.current }).then(() => {}); }, [aid, result]);
+  useEffect(() => { if (!loaded.current) return; const t = setTimeout(save, 1500); return () => clearTimeout(t); }, [ans, save]);
+  useEffect(() => {
+    const h = () => { if (document.visibilityState === 'hidden') save(); };
+    document.addEventListener('visibilitychange', h); window.addEventListener('pagehide', save);
+    return () => { document.removeEventListener('visibilitychange', h); window.removeEventListener('pagehide', save); save(); };
+  }, [save]);
   const deadline = qs[0] ? new Date(qs[0].started_at).getTime() + qs[0].duration_min * 60000 : 0;
   const left = Math.max(0, Math.floor((deadline - now) / 1000));
   const sections = useMemo(() => [...new Set(qs.map((q) => q.section))], [qs]);

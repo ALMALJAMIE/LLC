@@ -134,3 +134,16 @@ for (const path of [
   if (c) WIRED[path] = { ...WIRED[path], academic: c };
   else console.warn('academic route has no admin screen:', path);
 }
+
+// ---------------- Finance officer ----------------
+Object.assign(WIRED, {
+  '/finance-dashboard': { finance: lazy(() => import('./finance/FinanceDashboard')) },
+  '/finance/toolkit': { finance: Toolkit },
+  '/finance/reminders': { finance: TaskManager },
+  '/finance/community': { finance: named(() => import('./community/Community'), 'CommunityAccess') },
+  '/finance/community/feed/:hub': { finance: named(() => import('./community/Community'), 'CommunityHub') },
+});
+for (const path of ['/manage-profile', '/admin-enrollments', '/admin-financials', '/admin/agent-earnings', '/admin/agent-payouts', '/admin/commission-rules']) {
+  const c = WIRED[path]?.admin;
+  if (c) WIRED[path] = { ...WIRED[path], finance: c };
+}

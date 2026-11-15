@@ -6,14 +6,14 @@ import {
   SquareCheckBig, SquarePen, Star, Tag, UserCog, UserPlus, Users, Video, Wallet,
 } from 'lucide-react';
 
-export type Role = 'student' | 'instructor' | 'agent' | 'admin' | 'academic';
+export type Role = 'student' | 'instructor' | 'agent' | 'admin' | 'academic' | 'finance';
 /** Admin or academic supervisor: runs the academic side (courses, batches, lessons, exams, placement…). */
 export const isAcademicLead = (r?: Role | null) => r === 'admin' || r === 'academic';
 export type NavItem = { label: string; icon: LucideIcon; to?: string; children?: NavItem[] };
 
-export const ROLE_LABEL: Record<Role, string> = { student: 'Student', instructor: 'Instructor', agent: 'Agent', admin: 'Admin', academic: 'Academic Supervisor' };
+export const ROLE_LABEL: Record<Role, string> = { student: 'Student', instructor: 'Instructor', agent: 'Agent', admin: 'Admin', academic: 'Academic Supervisor', finance: 'Finance Officer' };
 export const ROLE_HOME: Record<Role, string> = {
-  student: '/student-dashboard', instructor: '/instructor-dashboard', agent: '/agent-dashboard', admin: '/admin-dashboard', academic: '/academic-dashboard',
+  student: '/student-dashboard', instructor: '/instructor-dashboard', agent: '/agent-dashboard', admin: '/admin-dashboard', academic: '/academic-dashboard', finance: '/finance-dashboard',
 };
 
 export const NAV: Record<Role, NavItem[]> = {
@@ -72,6 +72,22 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: 'Bank Details', icon: Building2, to: '/agent/bank-details' },
     { label: 'Form Builder', icon: ClipboardList, to: '/agent/forms' },
     { label: 'My Profile', icon: UserCog, to: '/manage-profile' },
+  ],
+  finance: [
+    { label: 'Dashboard', icon: LayoutDashboard, to: '/finance-dashboard' },
+    { label: 'Toolkit', icon: PenTool, to: '/finance/toolkit' },
+    { label: 'Community', icon: MessageCircle, to: '/finance/community' },
+    { label: 'Task Manager', icon: SquareCheckBig, to: '/finance/reminders' },
+    { label: 'Enrollments', icon: ClipboardCheck, to: '/admin-enrollments' },
+    { label: 'Payments & Invoices', icon: CreditCard, to: '/admin-financials' },
+    {
+      label: 'Agent Finance', icon: Wallet, children: [
+        { label: 'Commissions', icon: DollarSign, to: '/admin/agent-earnings' },
+        { label: 'Payouts', icon: Wallet, to: '/admin/agent-payouts' },
+        { label: 'Commission Rules', icon: Percent, to: '/admin/commission-rules' },
+      ],
+    },
+    { label: 'Manage Profile', icon: UserCog, to: '/manage-profile' },
   ],
   academic: [
     { label: 'Dashboard', icon: LayoutDashboard, to: '/academic-dashboard' },

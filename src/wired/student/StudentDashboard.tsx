@@ -9,7 +9,7 @@ import MiniCalendar from '../shared/MiniCalendar';
 import { dayName, hhmm, type ClassSession } from './hooks';
 
 type Overview = {
-  enrollments: { id: number; status: string; batch_id: number | null; course: { title: string; code: string } | null; batch: { code: string; name: string; instructor: { full_name: string } | null } | null }[];
+  enrollments: { id: number; status: string; batch_id: number | null; course_id: number; course: { title: string; code: string } | null; batch: { code: string; name: string; instructor: { full_name: string } | null } | null }[];
   results: { score: number | null; exam: { total_marks: number } | null }[];
   certs: number;
   payments: { id: number; amount: number; currency: string; status: string; created_at: string; enrollment: { course: { title: string } | null } | null }[];
@@ -19,7 +19,7 @@ type Overview = {
 
 async function load(uid: string) {
   const [en, rs, ce, pa, no] = await Promise.all([
-    supabase.from('enrollments').select('id,status,batch_id, course:courses(title,code), batch:batches(code,name, instructor:profiles(full_name))').eq('student_id', uid).in('status', ['active', 'pending', 'completed']),
+    supabase.from('enrollments').select('id,status,batch_id,course_id, course:courses(title,code), batch:batches(code,name, instructor:profiles(full_name))').eq('student_id', uid).in('status', ['active', 'pending', 'completed']),
     supabase.from('exam_results').select('score, exam:exams(total_marks)').eq('student_id', uid).eq('status', 'graded'),
     supabase.from('certificates').select('id', { count: 'exact', head: true }).eq('student_id', uid),
     supabase.from('payments').select('id,amount,currency,status,created_at, enrollment:enrollments(course:courses(title))').eq('student_id', uid).order('created_at', { ascending: false }).limit(4),
@@ -125,7 +125,7 @@ export default function StudentDashboard() {
                             </div>
                           )}
                         </div>
-                        <button disabled={e.status !== 'active'} onClick={() => nav('/student/my-learning')} className="w-full py-3.5 rounded-2xl text-[10px] font-extrabold uppercase tracking-widest flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"><CirclePlay size={16} /> {e.status === 'active' ? 'Continue Learning' : 'Awaiting Approval'}</button>
+                        <button disabled={e.status !== 'active'} onClick={() => nav(`/student/course/${e.course_id}`)} className="w-full py-3.5 rounded-2xl text-[10px] font-extrabold uppercase tracking-widest flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"><CirclePlay size={16} /> {e.status === 'active' ? 'Continue Learning' : 'Awaiting Approval'}</button>
                       </div>
                     );
                   })}

@@ -61,7 +61,7 @@ export default function StudentMyLearning() {
                       <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-indigo-500 rounded-full transition-all duration-1000" style={{ width: `${e.progress}%` }} /></div>
                     </div>
                     <div className="mt-auto">
-                      <button disabled={e.status !== 'active'} onClick={() => nav('/student/live-sessions')}
+                      <button disabled={e.status !== 'active'} onClick={() => nav(`/student/course/${e.course_id}`)}
                         className="w-full py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200 shadow-lg disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:cursor-not-allowed">
                         {e.status === 'active' ? <>Enter Classroom <CirclePlay size={16} /></> : e.status === 'pending' ? 'Awaiting approval' : b.label}
                       </button>

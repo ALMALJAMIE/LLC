@@ -7,6 +7,7 @@ const TaskManager = lazy(() => import('./shared/TaskManager'));
 const AcademicCalendar = lazy(() => import('./shared/AcademicCalendar'));
 const ClassScheduler = lazy(() => import('./shared/ClassScheduler'));
 const AbsenceApprovals = lazy(() => import('./shared/AbsenceApprovals'));
+const CurriculumEditor = lazy(() => import('./shared/CurriculumEditor'));
 const named = <K extends string>(loader: () => Promise<Record<K, React.ComponentType>>, k: K) => lazy(() => loader().then((m) => ({ default: m[k] })));
 
 /** Screens that are connected to the database. They replace the static layout for the same route. */
@@ -68,6 +69,10 @@ export const WIRED: Record<string, Partial<Record<Role, C>>> = {
   '/admin/agent-earnings': { admin: named(() => import('./admin/AgentAdmin'), 'AdminAgentEarnings') },
   '/admin/agent-payouts': { admin: named(() => import('./admin/AgentAdmin'), 'AdminAgentPayouts') },
   '/admin/commission-rules': { admin: named(() => import('./admin/AgentAdmin'), 'AdminCommissionRules') },
+  '/admin-curriculum': { admin: CurriculumEditor },
+  '/instructor/lessons': { instructor: CurriculumEditor },
+  '/admin/lessons/review': { admin: lazy(() => import('./admin/LessonApprovals')) },
+  '/student/course/:id': { student: lazy(() => import('./student/CoursePlayer')) },
   '/student/courses': { student: lazy(() => import('./student/StudentCourses')) },
   '/student/my-learning': { student: lazy(() => import('./student/StudentMyLearning')) },
   '/student/finances': { student: lazy(() => import('./student/StudentFinances')) },

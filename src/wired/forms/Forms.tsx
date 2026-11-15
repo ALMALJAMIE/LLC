@@ -70,7 +70,7 @@ function Builder({ form, onClose, onDone }: { form: Partial<Form>; onClose: () =
   const [busy, setBusy] = useState(false);
   const upd = (i: number, p: Partial<FField & { opts: string }>) => setFields(fields.map((f, j) => (j === i ? { ...f, ...p } : f)));
   const move = (i: number, d: number) => { const n = [...fields]; const [x] = n.splice(i, 1); n.splice(i + d, 0, x); setFields(n); };
-  const add = (type: FType = 'text') => setFields([...fields, { key: '', label: '', type, required: false, opts: hasOptions(type) ? 'Option 1\nOption 2' : '' }]);
+  const add = (type: FType = 'text') => setFields([...fields, { key: '', label: '', type, required: false, opts: '' }]);
   const save = async () => {
     if (!title.trim()) return toast.err('Give the form a title.');
     if (!fields.length) return toast.err('Add at least one question.');
@@ -98,8 +98,8 @@ function Builder({ form, onClose, onDone }: { form: Partial<Form>; onClose: () =
               <span className="text-xs font-black text-slate-400 mt-3 w-5">{i + 1}</span>
               <div className="flex-1 grid sm:grid-cols-3 gap-2">
                 <input className={`${inputCls} sm:col-span-2`} placeholder="Question" value={f.label} onChange={(e) => upd(i, { label: e.target.value })} />
-                <select className={inputCls} value={f.type} onChange={(e) => { const t = e.target.value as FType; upd(i, { type: t, opts: hasOptions(t) && !f.opts ? 'Option 1\nOption 2' : f.opts }); }}>{TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select>
-                {hasOptions(f.type) && <textarea rows={3} className={`${inputCls} sm:col-span-3`} placeholder="One option per line" value={f.opts ?? ''} onChange={(e) => upd(i, { opts: e.target.value })} />}
+                <select className={inputCls} value={f.type} onChange={(e) => { const t = e.target.value as FType; upd(i, { type: t }); }}>{TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select>
+                {hasOptions(f.type) && <textarea rows={3} className={`${inputCls} sm:col-span-3`} placeholder={'One option per line, e.g.\nMorning\nEvening'} value={f.opts ?? ''} onChange={(e) => upd(i, { opts: e.target.value })} />}
               </div>
               <div className="flex flex-col">
                 <button disabled={i === 0} onClick={() => move(i, -1)} className="p-1 text-slate-400 disabled:opacity-30"><ArrowUp size={14} /></button>

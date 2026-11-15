@@ -32,7 +32,11 @@ async function checkVersion() {
   try {
     const html = await fetch(`${import.meta.env.BASE_URL}index.html`, { cache: 'no-store' }).then((r) => r.text());
     const latest = [...html.matchAll(/<script[^>]*type="module"[^>]*src="([^"]+)"/g)].map((m) => m[1].split('/').pop()).join();
-    if (current && latest && latest !== current) location.reload();
+    // reload at most once per new version, so a stale cache can never cause a reload loop
+    if (current && latest && latest !== current && sessionStorage.getItem('llc-reloaded-for') !== latest) {
+      sessionStorage.setItem('llc-reloaded-for', latest);
+      location.reload();
+    }
   } catch { /* offline: try again later */ }
 }
 if (import.meta.env.PROD) {

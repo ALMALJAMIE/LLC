@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRight, Award, BookOpen, BrainCircuit, CalendarCheck, CircleCheck, Globe, GraduationCap, Handshake, Laptop, MapPin, PlayCircle, QrCode, Sparkles, Star, Users } from 'lucide-react';
+import { ArrowRight, Award, BookOpen, BrainCircuit, CalendarCheck, CircleCheck, Globe, GraduationCap, Handshake, Laptop, MapPin, PlayCircle, QrCode, ShieldCheck, Sparkles, Star, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { money } from '../../lib/db';
 import { useEffect, useState } from 'react';
 import { CoverImg } from '../../components/media';
 import { SiteShell, WhatsAppFab } from './Site';
+import { useCenter } from '../../lib/site';
 import { FAQ } from './Help';
 
 type C = { id: number; code: string; title: string; description: string | null; price: number; currency: string; delivery: string; duration_weeks: number | null; level: { name: string; cefr: string | null } | null };
@@ -36,8 +37,16 @@ export function CourseCard({ c }: { c: C }) {
   );
 }
 
+function useAccreditations() {
+  const [d, setD] = useState<{ id: number; name: string; issuer: string | null; link: string | null }[]>([]);
+  useEffect(() => { supabase.from('accreditations').select('id,name,issuer,link').eq('is_public', true).then(({ data }) => setD(data ?? [])); }, []);
+  return d;
+}
+
 export default function Home() {
   const courses = usePublicCourses(6);
+  const site = useCenter();
+  const accr = useAccreditations();
   const { hash } = useLocation();
   useEffect(() => { if (hash) setTimeout(() => document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth' }), 100); }, [hash]);
   return (
@@ -49,8 +58,8 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto px-5 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28 grid lg:grid-cols-2 gap-14 items-center">
           <div>
             <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 shadow-sm"><Sparkles size={14} className="text-orange-500" />Online & face-to-face in Kuala Lumpur</span>
-            <h1 className="mt-6 text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.05]">Your leap to <span className="text-indigo-600">fluent</span> <span className="relative whitespace-nowrap">English<svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none"><path d="M2 9C50 3 150 3 198 9" stroke="#e9a823" strokeWidth="5" strokeLinecap="round" /></svg></span></h1>
-            <p className="mt-6 text-lg text-slate-500 leading-relaxed max-w-lg">Structured courses from beginner to advanced, small classes with qualified teachers, and an online platform that keeps your lessons, timetable and progress in one place.</p>
+            {site.heroTitle ? <h1 className="mt-6 text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.05]">{site.heroTitle}</h1> : <h1 className="mt-6 text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.05]">Your leap to <span className="text-indigo-600">fluent</span> <span className="relative whitespace-nowrap">English<svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none"><path d="M2 9C50 3 150 3 198 9" stroke="#e9a823" strokeWidth="5" strokeLinecap="round" /></svg></span></h1>}
+            <p className="mt-6 text-lg text-slate-500 leading-relaxed max-w-lg">{site.heroSubtitle}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/placement" className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-xl shadow-orange-200 transition-all"><BrainCircuit size={18} /> Take the free placement test</Link>
               <Link to="/courses" className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 text-slate-800 font-bold shadow-sm">Browse courses <ArrowRight size={18} /></Link>
@@ -86,6 +95,10 @@ export default function Home() {
         </div>
       </section>
 
+      {accr.length > 0 && (
+        <section className="max-w-7xl mx-auto px-5 lg:px-8 pt-14"><p className="text-center text-xs font-black uppercase tracking-[0.25em] text-slate-400 mb-5">Accredited & recognised</p>
+          <div className="flex flex-wrap justify-center gap-3">{accr.map((a) => <a key={a.id} href={a.link ?? undefined} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border border-slate-100 shadow-sm text-sm"><ShieldCheck size={16} className="text-emerald-500" /><b className="text-slate-800">{a.name}</b>{a.issuer && <span className="text-slate-400">· {a.issuer}</span>}</a>)}</div></section>
+      )}
       {/* How it works */}
       <section id="how" className="max-w-7xl mx-auto px-5 lg:px-8 py-24">
         <div className="text-center max-w-2xl mx-auto mb-14"><p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">How it works</p><h2 className="text-4xl font-extrabold text-slate-900 mt-3 tracking-tight">From your first test to your certificate</h2></div>

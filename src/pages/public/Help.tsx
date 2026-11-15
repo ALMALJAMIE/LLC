@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, Mail, MessageCircle, Phone, Search } from 'lucide-react';
-import { CENTER } from '../../lib/site';
+import { useCenter } from '../../lib/site';
 import { SiteShell, WhatsAppFab } from './Site';
 
 const ITEMS: { cat: string; q: string; a: string }[] = [
@@ -37,6 +37,7 @@ export function FAQ({ limit, q = '' }: { limit?: number; q?: string }) {
 }
 
 export default function Help() {
+  const CENTER = useCenter();
   const [q, setQ] = useState('');
   return (
     <SiteShell>

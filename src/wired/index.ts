@@ -8,6 +8,8 @@ const AcademicCalendar = lazy(() => import('./shared/AcademicCalendar'));
 const ClassScheduler = lazy(() => import('./shared/ClassScheduler'));
 const AbsenceApprovals = lazy(() => import('./shared/AbsenceApprovals'));
 const CurriculumEditor = lazy(() => import('./shared/CurriculumEditor'));
+const FormBuilder = lazy(() => import('./forms/Forms'));
+const Toolkit = lazy(() => import('./shared/Toolkit'));
 const named = <K extends string>(loader: () => Promise<Record<K, React.ComponentType>>, k: K) => lazy(() => loader().then((m) => ({ default: m[k] })));
 
 /** Screens that are connected to the database. They replace the static layout for the same route. */
@@ -93,4 +95,20 @@ export const WIRED: Record<string, Partial<Record<Role, C>>> = {
   '/student/courses': { student: lazy(() => import('./student/StudentCourses')) },
   '/student/my-learning': { student: lazy(() => import('./student/StudentMyLearning')) },
   '/student/finances': { student: lazy(() => import('./student/StudentFinances')) },
+  '/admin/cms': { admin: named(() => import('./admin/AdminTools'), 'AdminCms') },
+  '/admin-accreditations': { admin: named(() => import('./admin/AdminTools'), 'AdminAccreditations') },
+  '/admin-grading-scales': { admin: named(() => import('./admin/AdminTools'), 'AdminGradingScales') },
+  '/admin/exam-templates': { admin: named(() => import('./admin/AdminTools'), 'AdminExamTemplates') },
+  '/admin-rubrics-bank': { admin: named(() => import('./admin/AdminTools'), 'AdminRubrics') },
+  '/admin/substitutes': { admin: named(() => import('./admin/AdminTools'), 'AdminSubstitutes') },
+  '/admin/master-timetable': { admin: named(() => import('./admin/AdminTools'), 'AdminMasterTimetable') },
+  '/admin/live-sessions': { admin: named(() => import('./admin/AdminTools'), 'AdminLiveSessions') },
+  '/admin-audit-logs': { admin: named(() => import('./admin/AdminTools'), 'AdminAuditLogs') },
+  '/admin/forms': { admin: FormBuilder },
+  '/agent/forms': { agent: FormBuilder },
+  '/student/toolkit': { student: Toolkit },
+  '/instructor/toolkit': { instructor: Toolkit },
+  '/admin/toolkit': { admin: Toolkit },
+  '/student/class-report': { student: named(() => import('./student/StudentReports'), 'StudentClassReport') },
+  '/student/language-report': { student: named(() => import('./student/StudentReports'), 'StudentLanguageReport') },
 };

@@ -4,7 +4,7 @@ import { ArrowLeft, Banknote, BookOpen, Briefcase, Building2, CalendarDays, Char
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { fmtDate, fmtDateTime, money, useData } from '../../lib/db';
-import { CENTER } from '../../lib/site';
+import { useCenter } from '../../lib/site';
 import { DemoNotice, Field, Page, PageHero, Spinner, StatusPill, btnAccent, btnPrimary, inputCls, toast } from '../../components/ui';
 import { sum, useAgentProfile, useEarnings, useReferrals, type AgentProfile } from './hooks';
 import mark from '../../assets/llc-mark.png';
@@ -72,6 +72,7 @@ export function AgentDashboard() {
 // ---------------- Contract ----------------
 type Tpl = { id: number; version: number; title: string; body: string };
 export function AgentContract() {
+  const CENTER = useCenter();
   const user = useAuth((s) => s.user)!;
   const profile = useAuth((s) => s.profile);
   const ap = useAgentProfile();

@@ -13,6 +13,7 @@ const Catalog = lazy(() => import('./pages/public/Catalog'));
 const Help = lazy(() => import('./pages/public/Help'));
 const PlacementLanding = lazy(() => import('./pages/public/Landing').then((m) => ({ default: m.PlacementLanding })));
 const AgentsLanding = lazy(() => import('./pages/public/Landing').then((m) => ({ default: m.AgentsLanding })));
+const PublicForm = lazy(() => import('./wired/forms/Forms').then((m) => ({ default: m.PublicForm })));
 import Register from './pages/public/Register';
 import { ForgotPassword, ResetPassword } from './pages/public/ForgotPassword';
 
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="/" element={pub(HomePage)} />
         <Route path="/courses" element={pub(Catalog)} />
         <Route path="/help" element={pub(Help)} />
+        <Route path="/f/:id" element={pub(PublicForm)} />
         <Route path="/placement" element={pub(PlacementLanding)} />
         <Route path="/agents" element={pub(AgentsLanding)} />
         <Route path="/login" element={<Login />} />

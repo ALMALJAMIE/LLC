@@ -4,7 +4,7 @@ import { Camera as Instagram, Mail, Menu, MessageCircle, Phone, X } from 'lucide
 import { BrandLockup } from '../../components/media';
 import { useAuth } from '../../lib/auth';
 import { ROLE_HOME } from '../../lib/nav';
-import { CENTER } from '../../lib/site';
+import { useCenter } from '../../lib/site';
 
 const LINKS = [
   { to: '/courses', label: 'Courses' },
@@ -49,6 +49,7 @@ export function SiteNav() {
 }
 
 export function SiteFooter() {
+  const CENTER = useCenter();
   return (
     <footer className="bg-[#0b1a3a] text-slate-300">
       <div className="max-w-7xl mx-auto px-5 lg:px-8 py-14 grid md:grid-cols-4 gap-10">
@@ -79,11 +80,18 @@ export function SiteFooter() {
   );
 }
 
+function Banner() {
+  const c = useCenter();
+  if (!c.banner) return null;
+  return <div className="bg-orange-500 text-white text-center text-sm font-bold px-4 py-2.5">{c.banner}</div>;
+}
+
 export function SiteShell({ children }: { children: ReactNode }) {
-  return <div className="min-h-screen bg-[#fafafa] flex flex-col"><SiteNav /><main className="flex-1">{children}</main><SiteFooter /></div>;
+  return <div className="min-h-screen bg-[#fafafa] flex flex-col"><Banner /><SiteNav /><main className="flex-1">{children}</main><SiteFooter /></div>;
 }
 
 export function WhatsAppFab() {
+  const CENTER = useCenter();
   return (
     <a href={`https://wa.me/${CENTER.whatsapp}`} target="_blank" rel="noreferrer" className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-emerald-500 text-white grid place-items-center shadow-xl shadow-emerald-200 hover:scale-110 transition-transform" aria-label="Chat on WhatsApp">
       <MessageCircle size={26} />

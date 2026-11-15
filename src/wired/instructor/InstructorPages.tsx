@@ -4,12 +4,13 @@ import { Check, ChevronDown, ChevronUp, Clock, Globe, Loader2, Mail, MapPin, Mes
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { fmtDate, fmtDateTime, useData } from '../../lib/db';
+import { gradeOf, useScale } from '../../lib/grading';
 import { DemoNotice, Field, Modal, Page, PageHero, Spinner, StatusPill, btnPrimary, inputCls, toast } from '../../components/ui';
 import { notify } from '../admin/AdminEnrollments';
 import { useRoster, useTeaching, type Roster, type TBatch } from './hooks';
 
 const hm = (s: string) => new Date(s).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-type Sess = { id: number; batch_id: number; title: string; starts_at: string; ends_at: string; mode: string; room: string | null; meeting_url: string | null; qr_token: string | null; batch?: { name: string } | null };
+type Sess = { id: number; batch_id: number; title: string; starts_at: string; ends_at: string; mode: string; room: string | null; meeting_url: string | null; qr_token: string | null; substitute_id?: string | null; batch?: { name: string } | null };
 
 // ---------------- My Batches ----------------
 export function InstructorBatches() {
@@ -61,7 +62,10 @@ export function InstructorTimetable() {
   const user = useAuth((s) => s.user);
   const batches = useTeaching();
   const ids = (batches.data ?? []).map((b) => b.id);
-  const { data, loading } = useData<Sess[]>(() => supabase.from('class_sessions').select('*, batch:batches(name)').in('batch_id', ids.length ? ids : [0]).gte('ends_at', new Date().toISOString()).order('starts_at').limit(120), [ids.join(',')]);
+  const { data, loading } = useData<Sess[]>(() => supabase.from('class_sessions').select('*, batch:batches(name)').or(`batch_id.in.(${ids.length ? ids.join(',') : 0}),substitute_id.eq.${user?.id}`).gte('ends_at', new Date().toISOString()).order('starts_at').limit(120), [ids.join(',')]);
+  const subs = useData<{ session_id: number; status: string }[]>(() => supabase.from('substitute_requests').select('session_id,status').eq('requested_by', user?.id ?? ''));
+  const [cover, setCover] = useState<Sess | null>(null);
+  const subOf = (id: number) => subs.data?.find((r) => r.session_id === id)?.status;
   const days = useMemo(() => {
     const m = new Map<string, Sess[]>();
     (data ?? []).forEach((s) => { const k = new Date(s.starts_at).toDateString(); m.set(k, [...(m.get(k) ?? []), s]); });
@@ -81,13 +85,40 @@ export function InstructorTimetable() {
                 <p className="font-extrabold text-slate-900 mt-1">{s.title}</p>
                 <p className="text-xs text-slate-500 truncate">{s.batch?.name}</p>
                 <p className={`text-[10px] font-bold uppercase mt-2 flex items-center gap-1 ${s.mode === 'online' ? 'text-sky-600' : 'text-orange-600'}`}>{s.mode === 'online' ? <><Globe size={12} />Online</> : <><MapPin size={12} />{s.room ?? 'On campus'}</>}</p>
-                {s.meeting_url && <a href={s.meeting_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-indigo-600"><Video size={12} />Start meeting</a>}
+                {s.substitute_id === user?.id && <p className="mt-2 text-[10px] font-black uppercase text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full w-fit">You are covering</p>}
+                <div className="mt-3 flex items-center gap-3">
+                  {s.meeting_url && <a href={s.meeting_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600"><Video size={12} />Start meeting</a>}
+                  {s.substitute_id !== user?.id && (subOf(s.id) ? <span className="ml-auto text-[10px] font-black uppercase text-slate-500">Cover {subOf(s.id)}</span>
+                    : <button disabled={user?.demo} onClick={() => setCover(s)} className="ml-auto text-xs font-bold text-slate-400 hover:text-orange-600">Request cover</button>)}
+                </div>
               </div>
             ))}</div>
           </div>
         ))}</div>
       )}
+      {cover && <CoverRequest s={cover} onClose={() => setCover(null)} onDone={() => { setCover(null); subs.reload(); }} />}
     </Page>
+  );
+}
+
+function CoverRequest({ s, onClose, onDone }: { s: Sess; onClose: () => void; onDone: () => void }) {
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const send = async () => {
+    if (!reason.trim()) return toast.err('Please write the reason.');
+    setBusy(true);
+    const { error } = await supabase.from('substitute_requests').insert({ session_id: s.id, reason: reason.trim() });
+    setBusy(false);
+    if (error) toast.err(error.message); else { toast.ok('Request sent to the admin'); onDone(); }
+  };
+  return (
+    <Modal open onClose={onClose} title="Request a substitute">
+      <div className="space-y-4">
+        <p className="text-sm text-slate-600"><b>{s.title}</b> · {s.batch?.name}<br />{new Date(s.starts_at).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+        <Field label="Reason"><textarea rows={3} className={inputCls} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Medical appointment" /></Field>
+        <button disabled={busy} onClick={send} className={`${btnPrimary} w-full`}>{busy && <Loader2 size={16} className="animate-spin" />}Send request</button>
+      </div>
+    </Modal>
   );
 }
 
@@ -193,6 +224,8 @@ function ExamForm({ exam, batches, onClose, onDone }: { exam: Partial<Exam>; bat
   const user = useAuth((s) => s.user)!;
   const [f, setF] = useState({ title: exam.title ?? '', kind: exam.kind ?? 'quiz', batch_id: exam.batch_id ? String(exam.batch_id) : '', starts_at: exam.starts_at ? new Date(new Date(exam.starts_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '', duration_min: String(exam.duration_min ?? 60), total_marks: String(exam.total_marks ?? 100), status: exam.status ?? 'scheduled' });
   const [busy, setBusy] = useState(false);
+  const tpl = useData<{ id: number; name: string; kind: string; duration_min: number; total_marks: number }[]>(() => supabase.from('exam_templates').select('id,name,kind,duration_min,total_marks').order('name'));
+  const applyTpl = (id: string) => { const t = tpl.data?.find((x) => String(x.id) === id); if (t) setF({ ...f, title: f.title || t.name, kind: t.kind, duration_min: String(t.duration_min), total_marks: String(t.total_marks) }); };
   const save = async (e: React.FormEvent) => {
     e.preventDefault(); setBusy(true);
     const b = batches.find((x) => String(x.id) === f.batch_id);
@@ -204,6 +237,7 @@ function ExamForm({ exam, batches, onClose, onDone }: { exam: Partial<Exam>; bat
   return (
     <Modal open onClose={onClose} title={exam.id ? 'Edit Exam' : 'Create Exam'}>
       <form onSubmit={save} className="grid grid-cols-2 gap-4">
+        {!exam.id && !!tpl.data?.length && <div className="col-span-2"><Field label="Start from a template (optional)"><select className={inputCls} defaultValue="" onChange={(e) => applyTpl(e.target.value)}><option value="">— Blank exam —</option>{tpl.data.map((t) => <option key={t.id} value={t.id}>{t.name} · {t.kind} · {t.duration_min} min</option>)}</select></Field></div>}
         <div className="col-span-2"><Field label="Title"><input required className={inputCls} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></Field></div>
         <div className="col-span-2"><Field label="Batch"><select required className={inputCls} value={f.batch_id} onChange={(e) => setF({ ...f, batch_id: e.target.value })}><option value="">— Select —</option>{batches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></Field></div>
         <Field label="Type"><select className={inputCls} value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })}>{['quiz', 'midterm', 'final'].map((k) => <option key={k}>{k}</option>)}</select></Field>
@@ -218,9 +252,9 @@ function ExamForm({ exam, batches, onClose, onDone }: { exam: Partial<Exam>; bat
 }
 
 // ---------------- Grading console ----------------
-const gradeOf = (pct: number) => (pct >= 90 ? 'A+' : pct >= 80 ? 'A' : pct >= 70 ? 'B' : pct >= 60 ? 'C' : pct >= 50 ? 'D' : 'F');
 export function InstructorGrading() {
   const user = useAuth((s) => s.user);
+  useEffect(() => { useScale.getState().load(); }, []);
   const batches = useTeaching(['active', 'completed']);
   const ids = (batches.data ?? []).map((b) => b.id);
   const exams = useData<Exam[]>(() => supabase.from('exams').select('*, batch:batches(name)').in('batch_id', ids.length ? ids : [0]).neq('status', 'draft').order('starts_at', { ascending: false }), [ids.join(',')]);

@@ -3,7 +3,7 @@ import { BookOpen, CalendarDays, ChevronRight, Clock, Funnel, Globe, Layers, Loa
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { fmtDate, money, useData } from '../../lib/db';
-import { CENTER } from '../../lib/site';
+import { useCenter } from '../../lib/site';
 import { CoverImg, Illus } from '../../components/media';
 import { DemoNotice, Field, Modal, Spinner, StatusPill, btnAccent, btnGhost, inputCls, toast } from '../../components/ui';
 import type { Batch, Course } from './types';
@@ -86,6 +86,7 @@ export default function StudentCourses() {
 }
 
 function CourseDetails({ course: c, status, onClose, onDone }: { course: Course; status?: string; onClose: () => void; onDone: () => void }) {
+  const CENTER = useCenter();
   const user = useAuth((s) => s.user)!;
   const free = Number(c.price) === 0;
   const batches = useData<Batch[]>(() =>

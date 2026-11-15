@@ -1,7 +1,8 @@
 import { Suspense, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, ChevronDown, Menu, Type } from 'lucide-react';
+import { ChevronDown, Menu, Type } from 'lucide-react';
 import Sidebar from './Sidebar';
+import Notifications from './Notifications';
 import { useAuth } from '../../lib/auth';
 import { ROLE_HOME, ROLE_LABEL } from '../../lib/nav';
 import { BrandLockup } from '../media';
@@ -18,12 +19,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
         <div className="relative">
           <button className="p-2 text-slate-500 hover:text-orange-500 bg-slate-50 hover:bg-orange-50 border border-slate-200 rounded-full transition-colors" title="Accessibility Settings"><Type size={20} /></button>
         </div>
-        <div className="relative">
-          <button aria-label="Notifications" className="relative p-2.5 text-slate-600 hover:text-[#e9a823] bg-white border border-slate-200 rounded-full shadow-sm hover:bg-slate-50 hover:border-[#e9a823]/20 transition-all duration-300">
-            <Bell size={20} />
-            <span className="absolute -top-1 -right-1 bg-[#e9a823] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-sm">3</span>
-          </button>
-        </div>
+        <Notifications />
         <div className="relative">
           <div className="flex items-center gap-3 pl-1.5 pr-1.5 sm:pr-4 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-lg hover:shadow-gray-200/50 hover:border-orange-200 transition-all duration-300 cursor-pointer group select-none">
             <div className="relative">

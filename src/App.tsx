@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, matchPath, useLocation } from 'react-router-dom';
 import { PAGES } from './routes.gen';
 import { WIRED } from './wired';
 import PortalLayout from './components/layout/PortalLayout';
@@ -35,7 +35,9 @@ function Portal({ path }: { path: string }) {
 
 const pub = (C: React.ComponentType) => <Suspense fallback={<Spinner />}><C /></Suspense>;
 
-const ALL = Array.from(new Set([...Object.keys(PAGES), ...Object.keys(WIRED)]));
+// Static reference screens are dropped when a connected screen covers the same URL (incl. :param routes).
+const wiredKeys = Object.keys(WIRED);
+const ALL = [...wiredKeys, ...Object.keys(PAGES).filter((p) => !wiredKeys.some((w) => matchPath(w, p)))];
 
 export default function App() {
   return (

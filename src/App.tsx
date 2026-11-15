@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { PAGES } from './routes.gen';
 import { WIRED } from './wired';
@@ -6,6 +7,12 @@ import { Spinner, Toaster } from './components/ui';
 import { useAuth } from './lib/auth';
 import { ROLE_HOME } from './lib/nav';
 import Login from './pages/public/Login';
+import { lazy } from 'react';
+const HomePage = lazy(() => import('./pages/public/Home'));
+const Catalog = lazy(() => import('./pages/public/Catalog'));
+const Help = lazy(() => import('./pages/public/Help'));
+const PlacementLanding = lazy(() => import('./pages/public/Landing').then((m) => ({ default: m.PlacementLanding })));
+const AgentsLanding = lazy(() => import('./pages/public/Landing').then((m) => ({ default: m.AgentsLanding })));
 import Register from './pages/public/Register';
 import { ForgotPassword, ResetPassword } from './pages/public/ForgotPassword';
 
@@ -26,12 +33,7 @@ function Portal({ path }: { path: string }) {
   );
 }
 
-function Home() {
-  const user = useAuth((s) => s.user);
-  const ready = useAuth((s) => s.ready);
-  if (!user && !ready) return <Spinner />;
-  return <Navigate to={user ? ROLE_HOME[user.role] : '/login'} replace />;
-}
+const pub = (C: React.ComponentType) => <Suspense fallback={<Spinner />}><C /></Suspense>;
 
 const ALL = Array.from(new Set([...Object.keys(PAGES), ...Object.keys(WIRED)]));
 
@@ -39,13 +41,17 @@ export default function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={pub(HomePage)} />
+        <Route path="/courses" element={pub(Catalog)} />
+        <Route path="/help" element={pub(Help)} />
+        <Route path="/placement" element={pub(PlacementLanding)} />
+        <Route path="/agents" element={pub(AgentsLanding)} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         {ALL.map((p) => <Route key={p} path={p} element={<Portal path={p} />} />)}
-        <Route path="*" element={<Home />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />
     </BrowserRouter>

@@ -24,3 +24,17 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 );
+
+// Auto-update: when the tab is reopened after a new deploy, reload so nobody keeps running an old copy.
+// (Only on returning to the tab, never in the middle of filling a form.)
+const current = [...document.querySelectorAll<HTMLScriptElement>('script[type="module"][src]')].map((s) => s.src.split('/').pop()).join();
+async function checkVersion() {
+  try {
+    const html = await fetch(`${import.meta.env.BASE_URL}index.html`, { cache: 'no-store' }).then((r) => r.text());
+    const latest = [...html.matchAll(/<script[^>]*type="module"[^>]*src="([^"]+)"/g)].map((m) => m[1].split('/').pop()).join();
+    if (current && latest && latest !== current) location.reload();
+  } catch { /* offline: try again later */ }
+}
+if (import.meta.env.PROD) {
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(); });
+}

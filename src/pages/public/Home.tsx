@@ -37,6 +37,13 @@ export function CourseCard({ c }: { c: C }) {
   );
 }
 
+type PubReview = { id: number; first_name: string; course: string | null; rating: number; comment: string };
+function usePublicReviews() {
+  const [d, setD] = useState<PubReview[]>([]);
+  useEffect(() => { supabase.rpc('public_reviews', { p_limit: 6 }).then(({ data }) => setD((data as PubReview[]) ?? [])); }, []);
+  return d;
+}
+
 function useAccreditations() {
   const [d, setD] = useState<{ id: number; name: string; issuer: string | null; link: string | null }[]>([]);
   useEffect(() => { supabase.from('accreditations').select('id,name,issuer,link').eq('is_public', true).then(({ data }) => setD(data ?? [])); }, []);
@@ -47,6 +54,7 @@ export default function Home() {
   const courses = usePublicCourses(6);
   const site = useCenter();
   const accr = useAccreditations();
+  const reviews = usePublicReviews();
   const { hash } = useLocation();
   useEffect(() => { if (hash) setTimeout(() => document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth' }), 100); }, [hash]);
   return (
@@ -98,6 +106,19 @@ export default function Home() {
       {accr.length > 0 && (
         <section className="max-w-7xl mx-auto px-5 lg:px-8 pt-14"><p className="text-center text-xs font-black uppercase tracking-[0.25em] text-slate-400 mb-5">Accredited & recognised</p>
           <div className="flex flex-wrap justify-center gap-3">{accr.map((a) => <a key={a.id} href={a.link ?? undefined} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border border-slate-100 shadow-sm text-sm"><ShieldCheck size={16} className="text-emerald-500" /><b className="text-slate-800">{a.name}</b>{a.issuer && <span className="text-slate-400">· {a.issuer}</span>}</a>)}</div></section>
+      )}
+      {reviews.length > 0 && (
+        <section className="max-w-7xl mx-auto px-5 lg:px-8 pt-20">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">Student reviews</p>
+          <h2 className="text-4xl font-extrabold text-slate-900 mt-3 tracking-tight mb-10">What our students say</h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">{reviews.map((r) => (
+            <figure key={r.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm p-7 flex flex-col">
+              <div className="flex gap-0.5">{[1, 2, 3, 4, 5].map((i) => <Star key={i} size={16} className={i <= r.rating ? 'fill-orange-400 text-orange-400' : 'text-slate-200'} />)}</div>
+              <blockquote className="mt-4 text-slate-700 leading-relaxed flex-1">“{r.comment}”</blockquote>
+              <figcaption className="mt-5 text-sm"><b className="text-slate-900">{r.first_name}</b>{r.course && <span className="text-slate-400"> · {r.course}</span>}</figcaption>
+            </figure>
+          ))}</div>
+        </section>
       )}
       {/* How it works */}
       <section id="how" className="max-w-7xl mx-auto px-5 lg:px-8 py-24">

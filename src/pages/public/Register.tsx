@@ -1,3 +1,4 @@
+import PasswordInput from '../../components/PasswordInput';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Globe, Loader2, Lock, Mail, MailCheck, Phone, User } from 'lucide-react';
@@ -41,7 +42,7 @@ export default function Register() {
     <label className="block">
       <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{label}</span>
       <div className={authInput}><Icon size={18} className="text-slate-400" />
-        <input required={k !== 'phone' && k !== 'company'} value={f[k]} onChange={set(k)} type={type} placeholder={ph} className="flex-1 outline-none text-sm bg-transparent" /></div>
+        {type === 'password' ? <PasswordInput inline required value={f[k]} onChange={set(k)} placeholder={ph} className="flex-1 min-w-0 outline-none text-sm bg-transparent" /> : <input required={k !== 'phone' && k !== 'company'} value={f[k]} onChange={set(k)} type={type} placeholder={ph} className="flex-1 outline-none text-sm bg-transparent" />}</div>
     </label>
   );
 

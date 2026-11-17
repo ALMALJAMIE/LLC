@@ -713,5 +713,7 @@ const ar3: Record<string, string> = {
   "Turn on only after the Stripe keys and the two payment functions are set up in Supabase.": "فعّله فقط بعد ضبط مفاتيح Stripe ودالتي الدفع في Supabase.",
   "Online payment is not set up yet.": "الدفع الإلكتروني غير مُعدّ بعد.",
   "Could not open the payment page.": "تعذّر فتح صفحة الدفع.",
+  "Show password": "إظهار كلمة المرور",
+  "Hide password": "إخفاء كلمة المرور",
 };
 export default ar3;

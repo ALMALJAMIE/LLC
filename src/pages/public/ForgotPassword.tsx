@@ -1,3 +1,4 @@
+import PasswordInput from '../../components/PasswordInput';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, KeyRound, Loader2, Lock, Mail, MailCheck } from 'lucide-react';
@@ -63,7 +64,7 @@ export function ResetPassword() {
       <p className="text-slate-500 mb-8">Choose a strong password you have not used before.</p>
       <form onSubmit={submit} className="space-y-4">
         <label className="block"><span className="text-xs font-bold text-slate-500 uppercase tracking-wider">New password</span>
-          <div className={authInput}><Lock size={18} className="text-slate-400" /><input required type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="8+ characters" className="flex-1 outline-none text-sm bg-transparent" /></div></label>
+          <div className={authInput}><Lock size={18} className="text-slate-400" /><PasswordInput inline required value={pw} onChange={(e) => setPw(e.target.value)} placeholder="8+ characters" className="flex-1 outline-none text-sm bg-transparent" /></div></label>
         {error && <p className="text-sm text-red-500">{error}</p>}
         {ok && <p className="text-sm text-emerald-600">Password updated. Redirecting…</p>}
         <button disabled={busy} className={authBtn}>{busy ? <Loader2 className="animate-spin" size={18} /> : 'Update Password'}</button>

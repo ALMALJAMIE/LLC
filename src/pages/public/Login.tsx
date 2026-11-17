@@ -1,3 +1,4 @@
+import PasswordInput from '../../components/PasswordInput';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Briefcase, GraduationCap, Loader2, Lock, Mail, Presentation, ShieldCheck, ClipboardCheck, Wallet, Headset } from 'lucide-react';
@@ -52,7 +53,7 @@ export default function Login() {
           <div className="flex justify-between items-center"><span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Password</span>
             <Link to="/forgot-password" className="text-xs font-bold text-indigo-600 hover:text-orange-500">Forgot password?</Link></div>
           <div className={authInput}><Lock size={18} className="text-slate-400" />
-            <input required value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete="current-password" placeholder="••••••••" className="flex-1 outline-none text-sm bg-transparent" /></div>
+            <PasswordInput inline required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" placeholder="••••••••" className="flex-1 outline-none text-sm bg-transparent" /></div>
         </label>
         {error && <p className="text-sm text-red-500">{error}</p>}
         <button disabled={busy} className={authBtn}>{busy ? <Loader2 className="animate-spin" size={18} /> : <>Sign In <ArrowRight size={18} /></>}</button>

@@ -110,10 +110,18 @@ function walk(root: Node) {
   if (root.nodeType === 3) { if (!skipped((root as Text).parentElement)) doText(root as Text); return; }
   if (root.nodeType !== 1) return;
   const el = root as Element;
+  const tag = el.tagName.toUpperCase();
+  if ((tag === 'INPUT' || tag === 'TEXTAREA') && !el.closest('[data-no-i18n]')) { doEl(el); return; }
   if (skipped(el)) return;
   doEl(el);
   const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {
-    acceptNode: (n) => (n.nodeType === 1 && (SKIP.has((n as Element).tagName.toUpperCase()) || (n as Element).hasAttribute('data-no-i18n')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+    acceptNode: (n) => {
+      if (n.nodeType !== 1) return NodeFilter.FILTER_ACCEPT;
+      const e = n as Element, t = e.tagName.toUpperCase();
+      if (e.hasAttribute('data-no-i18n')) return NodeFilter.FILTER_REJECT;
+      if (t === 'INPUT' || t === 'TEXTAREA') { doEl(e); return NodeFilter.FILTER_REJECT; } // placeholder only
+      return SKIP.has(t) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+    },
   });
   let n: Node | null;
   while ((n = tw.nextNode())) n.nodeType === 3 ? doText(n as Text) : doEl(n as Element);

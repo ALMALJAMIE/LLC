@@ -1,3 +1,4 @@
+import PasswordInput from '../../components/PasswordInput';
 import { useEffect, useRef, useState } from 'react';
 import { Calendar, Camera, Hash, KeyRound, Loader2, Mail, Save, User } from 'lucide-react';
 import { useAuth, type Profile } from '../../lib/auth';
@@ -125,7 +126,7 @@ export default function ManageProfile() {
         </div>
       </div>
       <Modal open={pwOpen} onClose={() => setPwOpen(false)} title="Change Password">
-        <input type="password" className={inputCls} placeholder="New password (8+ characters)" value={pw} onChange={(e) => setPw(e.target.value)} />
+        <PasswordInput className={inputCls} placeholder="New password (8+ characters)" value={pw} onChange={(e) => setPw(e.target.value)} />
         <button onClick={changePw} className={`${btnPrimary} w-full mt-4`}>Update Password</button>
       </Modal>
     </Page>

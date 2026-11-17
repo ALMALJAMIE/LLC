@@ -1,3 +1,4 @@
+import { payOnline } from '../../lib/stripe';
 import { useMemo, useState } from 'react';
 import { BookOpen, CalendarDays, ChevronRight, Clock, Funnel, Globe, Layers, Loader2, MapPin, Search, Upload, Users } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
@@ -95,14 +96,25 @@ function CourseDetails({ course: c, status, onClose, onDone }: { course: Course;
   const [ref, setRef] = useState('');
   const [receipt, setReceipt] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const [method, setMethod] = useState<'card' | 'bank'>('card');
+  const online = !!CENTER.bank.onlinePay && !free;
+  const byCard = online && method === 'card';
 
   const enroll = async () => {
     if (user.demo) return toast.err('Sign in with a real account to enroll.');
-    if (!free && !receipt) return toast.err('Please attach your payment receipt.');
+    if (!free && !byCard && !receipt) return toast.err('Please attach your payment receipt.');
     setBusy(true);
     const { data: en, error } = await supabase.from('enrollments')
       .insert({ student_id: user.id, course_id: c.id, batch_id: batchId || null, status: 'pending', source: 'self' }).select('id').single();
     if (error) { setBusy(false); return toast.err(error.code === '23505' ? 'You already requested this course.' : error.message); }
+    if (byCard) {
+      const pay = await supabase.from('payments').insert({ student_id: user.id, enrollment_id: en.id, amount: c.price, currency: c.currency, method: 'card', status: 'pending' }).select('id').single();
+      if (pay.error) { setBusy(false); return toast.err(pay.error.message); }
+      const err = await payOnline(pay.data.id);
+      setBusy(false);
+      if (err) { toast.err(err); onDone(); }
+      return;
+    }
     if (!free && receipt) {
       const path = `${user.id}/receipts/${en.id}-${Date.now()}-${receipt.name.replace(/[^\w.-]/g, '_')}`;
       const up = await supabase.storage.from('uploads').upload(path, receipt);
@@ -159,7 +171,17 @@ function CourseDetails({ course: c, status, onClose, onDone }: { course: Course;
                   </div>
                 )}
               </Field>
-              {!free && (
+              {online && (
+                <div className="grid grid-cols-2 gap-2">
+                  {([['card', 'Pay online', 'Card / FPX'], ['bank', 'Bank transfer', 'Upload receipt']] as const).map(([k, l, d]) => (
+                    <button key={k} type="button" onClick={() => setMethod(k)} className={`p-3 rounded-xl border text-left transition-all ${method === k ? 'border-orange-400 bg-orange-50' : 'border-slate-200 hover:border-slate-300'}`}>
+                      <p className="text-sm font-bold text-slate-800">{l}</p><p className="text-[11px] text-slate-500">{d}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {byCard && <p className="text-xs text-slate-500 p-3 rounded-xl bg-indigo-50 border border-indigo-100">You will go to a secure Stripe page to pay. Your enrollment is confirmed after the payment.</p>}
+              {!free && !byCard && (
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-3">
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Pay by bank transfer</p>
                   <div className="text-sm text-slate-600 grid grid-cols-3 gap-y-1"><span className="text-slate-400">Bank</span><span className="col-span-2 font-semibold">{CENTER.bank.bankName}</span><span className="text-slate-400">Account name</span><span className="col-span-2 font-semibold">{CENTER.bank.accountName}</span><span className="text-slate-400">Account no.</span><span className="col-span-2 font-semibold">{CENTER.bank.accountNo}</span></div>
@@ -172,7 +194,7 @@ function CourseDetails({ course: c, status, onClose, onDone }: { course: Course;
               )}
               <div className="flex gap-3 justify-end">
                 <button onClick={onClose} className={btnGhost}>Cancel</button>
-                <button onClick={enroll} disabled={busy} className={btnAccent}>{busy && <Loader2 size={16} className="animate-spin" />} {free ? 'Request Enrollment' : 'Submit & Enroll'}</button>
+                <button onClick={enroll} disabled={busy} className={btnAccent}>{busy && <Loader2 size={16} className="animate-spin" />} {free ? 'Request Enrollment' : byCard ? 'Continue to payment' : 'Submit & Enroll'}</button>
               </div>
             </>
           )}

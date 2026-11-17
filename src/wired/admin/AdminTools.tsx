@@ -18,7 +18,7 @@ export function AdminCms() {
   const [f, setF] = useState<Center>(c);
   const [busy, setBusy] = useState(false);
   const set = (k: keyof Center, v: string) => setF({ ...f, [k]: v });
-  const setBank = (k: keyof Center['bank'], v: string) => setF({ ...f, bank: { ...f.bank, [k]: v } });
+  const setBank = (k: keyof Center['bank'], v: string | boolean) => setF({ ...f, bank: { ...f.bank, [k]: v } });
   const save = async () => {
     setBusy(true);
     const { bank, ...center } = f;
@@ -54,6 +54,10 @@ export function AdminCms() {
             <Field label="Account name"><input className={inputCls} value={f.bank.accountName} onChange={(e) => setBank('accountName', e.target.value)} /></Field>
             <Field label="Account number"><input className={inputCls} value={f.bank.accountNo} onChange={(e) => setBank('accountNo', e.target.value)} /></Field>
             <Field label="Note"><input className={inputCls} placeholder="e.g. Use your name as reference" value={f.bank.note} onChange={(e) => setBank('note', e.target.value)} /></Field>
+            <label className="sm:col-span-2 flex items-start gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer">
+              <input type="checkbox" className="mt-1 accent-orange-500" checked={!!f.bank.onlinePay} onChange={(e) => setBank('onlinePay', e.target.checked)} />
+              <span className="text-sm"><b className="text-slate-800">Accept online payments (Stripe: card / FPX)</b><br /><span className="text-slate-500 text-xs">Turn on only after the Stripe keys and the two payment functions are set up in Supabase.</span></span>
+            </label>
           </section>
           <button disabled={busy || user?.demo} onClick={save} className={`${btnPrimary} w-full`}>{busy ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Publish changes</button>
         </aside>

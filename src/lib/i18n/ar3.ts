@@ -700,5 +700,18 @@ const ar3: Record<string, string> = {
   "” and all its responses?": "» وكل ردوده؟",
   "” is closed and no longer accepts responses.": "» مغلق ولم يعد يستقبل ردودًا.",
   "✓ Checked in (": "✓ سجّل الحضور (",
+  "Pay online": "الدفع الإلكتروني",
+  "Card / FPX": "بطاقة / FPX",
+  "Bank transfer": "تحويل بنكي",
+  "Upload receipt": "رفع الإيصال",
+  "Continue to payment": "المتابعة إلى الدفع",
+  "You will go to a secure Stripe page to pay. Your enrollment is confirmed after the payment.": "ستنتقل إلى صفحة Stripe الآمنة للدفع، ويُؤكَّد تسجيلك بعد الدفع.",
+  "Pay now": "ادفع الآن",
+  "Thank you! Your payment is being confirmed.": "شكرًا! يجري تأكيد دفعتك.",
+  "Payment cancelled. You can pay later from this page.": "أُلغي الدفع. يمكنك الدفع لاحقًا من هذه الصفحة.",
+  "Accept online payments (Stripe: card / FPX)": "قبول الدفع الإلكتروني (Stripe: بطاقة / FPX)",
+  "Turn on only after the Stripe keys and the two payment functions are set up in Supabase.": "فعّله فقط بعد ضبط مفاتيح Stripe ودالتي الدفع في Supabase.",
+  "Online payment is not set up yet.": "الدفع الإلكتروني غير مُعدّ بعد.",
+  "Could not open the payment page.": "تعذّر فتح صفحة الدفع.",
 };
 export default ar3;

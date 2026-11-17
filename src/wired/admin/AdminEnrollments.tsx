@@ -10,10 +10,10 @@ export type AdmEnrollment = {
   id: number; status: string; progress: number; source: string; note: string | null; created_at: string; course_id: number; batch_id: number | null;
   student: { id: string; full_name: string; email: string; student_no: string | null; phone: string | null } | null;
   course: { title: string; code: string; price: number } | null; batch: { name: string } | null;
-  payments: { id: number; amount: number; currency: string; status: string; receipt_url: string | null; reference: string | null }[];
+  payments: { id: number; amount: number; currency: string; status: string; receipt_url: string | null; reference: string | null; method?: string | null }[];
 };
 
-export const ENROLL_SELECT = 'id,status,progress,source,note,created_at,course_id,batch_id, student:profiles!enrollments_student_id_fkey(id,full_name,email,student_no,phone), course:courses(title,code,price), batch:batches(name), payments(id,amount,currency,status,receipt_url,reference)';
+export const ENROLL_SELECT = 'id,status,progress,source,note,created_at,course_id,batch_id, student:profiles!enrollments_student_id_fkey(id,full_name,email,student_no,phone), course:courses(title,code,price), batch:batches(name), payments(id,amount,currency,status,receipt_url,reference,method)';
 
 export async function notify(user_id: string, title: string, body?: string, link?: string) {
   await supabase.from('notifications').insert({ user_id, title, body: body ?? null, link: link ?? null });
@@ -98,7 +98,7 @@ export function ManageEnrollment({ e, onClose, onDone }: { e: AdmEnrollment; onC
     if (status === 'active' && !batch) return toast.err('Assign a batch before approving.');
     setBusy(true);
     const { error } = await supabase.from('enrollments').update({ status, batch_id: batch ? Number(batch) : null, note: note || null }).eq('id', e.id);
-    if (!error && pay && status === 'active' && pay.status === 'pending') await supabase.from('payments').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', pay.id);
+    if (!error && pay && status === 'active' && pay.status === 'pending' && pay.method !== 'card') await supabase.from('payments').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', pay.id);
     if (!error && pay && status === 'rejected' && pay.status === 'pending') await supabase.from('payments').update({ status: 'failed' }).eq('id', pay.id);
     if (!error && e.student) {
       const t = { active: 'Enrollment approved 🎉', rejected: 'Enrollment not approved', completed: 'Course completed', cancelled: 'Enrollment cancelled', pending: 'Enrollment updated' }[status] ?? 'Enrollment updated';

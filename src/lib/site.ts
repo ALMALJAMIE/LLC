@@ -15,7 +15,7 @@ const DEFAULTS = {
   heroTitle: '',
   heroSubtitle: 'Structured courses from beginner to advanced, small classes with qualified teachers, and an online platform that keeps your lessons, timetable and progress in one place.',
   banner: '',
-  bank: { bankName: 'To be announced', accountName: 'Language Leap Center', accountNo: '—', note: '' },
+  bank: { bankName: 'To be announced', accountName: 'Language Leap Center', accountNo: '—', note: '', onlinePay: false },
 };
 export type Center = typeof DEFAULTS;
 

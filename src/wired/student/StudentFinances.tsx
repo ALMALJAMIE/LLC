@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { payOnline } from '../../lib/stripe';
+import { useCenter } from '../../lib/site';
 import { CreditCard, Download, FileText } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
@@ -17,6 +19,15 @@ export default function StudentFinances() {
   const profile = useAuth((s) => s.profile);
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
+  const CENTER = useCenter();
+  const [paying, setPaying] = useState<number | null>(null);
+  useEffect(() => {
+    const u = new URLSearchParams(location.search);
+    if (u.get('paid')) toast.ok('Thank you! Your payment is being confirmed.');
+    if (u.get('cancelled')) toast.err('Payment cancelled. You can pay later from this page.');
+    if (u.get('paid') || u.get('cancelled')) history.replaceState(null, '', location.pathname);
+  }, []);
+  const pay = async (id: number) => { setPaying(id); const e = await payOnline(id); setPaying(null); if (e) toast.err(e); };
   const { data, loading } = useData<Payment[]>(() =>
     supabase.from('payments').select('*, enrollment:enrollments(course:courses(title,code))').eq('student_id', user!.id).order('created_at', { ascending: false }));
   const list = useMemo(() => (data ?? []).filter((p) =>
@@ -49,9 +60,9 @@ export default function StudentFinances() {
           <table className="w-full table-fixed text-left text-xs sm:text-sm min-w-[720px]">
             <thead className="bg-slate-50 border-b border-slate-100 text-[11px] font-extrabold uppercase text-slate-500 tracking-wider">
               <tr>
-                <th className="w-[30%] px-3 sm:px-4 py-3">Course / Invoice</th><th className="w-[18%] px-2 sm:px-3 py-3">Date &amp; Time</th>
+                <th className="w-[26%] px-3 sm:px-4 py-3">Course / Invoice</th><th className="w-[18%] px-2 sm:px-3 py-3">Date &amp; Time</th>
                 <th className="w-[18%] px-2 sm:px-3 py-3">Transaction ID</th><th className="w-[14%] px-2 sm:px-3 py-3">Amount</th>
-                <th className="w-[12%] px-2 sm:px-3 py-3">Status</th><th className="w-[8%] px-2 sm:px-3 py-3 text-right">PDF</th>
+                <th className="w-[12%] px-2 sm:px-3 py-3">Status</th><th className="w-[12%] px-2 sm:px-3 py-3 text-right">PDF</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -65,6 +76,7 @@ export default function StudentFinances() {
                     <td className="px-2 sm:px-3 py-3 font-bold text-slate-800">{money(p.amount, p.currency)}</td>
                     <td className="px-2 sm:px-3 py-3"><StatusPill status={p.status} /></td>
                     <td className="px-2 sm:px-3 py-3 text-right space-x-1">
+                      {p.status === 'pending' && !p.receipt_url && CENTER.bank.onlinePay && <button onClick={() => pay(p.id)} disabled={paying === p.id} className="px-3 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold disabled:opacity-60">{paying === p.id ? '…' : 'Pay now'}</button>}
                       {p.receipt_url && <button title="Receipt" onClick={() => receipt(p.receipt_url!)} className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"><FileText size={16} /></button>}
                       {p.status === 'paid' && <button title="Invoice" onClick={() => printInvoice(p, profile)} className="p-1.5 rounded-lg text-slate-400 hover:text-orange-600 hover:bg-orange-50"><Download size={16} /></button>}
                     </td>

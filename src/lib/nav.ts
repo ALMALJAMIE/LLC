@@ -187,7 +187,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: 'Users', icon: Users, to: '/admin-users' },
     { label: 'Financials', icon: DollarSign, to: '/admin-financials' },
     { label: 'Audit Logs', icon: FileText, to: '/admin-audit-logs' },
-    { label: 'CMS', icon: PenLine, to: '/admin/cms' },
+    { label: 'Website CMS', icon: PenLine, to: '/admin/cms' },
     { label: 'Form Builder', icon: ClipboardList, to: '/admin/forms' },
     { label: 'Accreditations', icon: ShieldCheck, to: '/admin-accreditations' },
     { label: 'Manage Profile', icon: UserCog, to: '/manage-profile' },

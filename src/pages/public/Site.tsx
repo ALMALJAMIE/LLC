@@ -1,3 +1,4 @@
+import LangToggle from '../../components/LangToggle';
 import { useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Camera as Instagram, Mail, Menu, MessageCircle, Phone, X } from 'lucide-react';
@@ -27,12 +28,13 @@ export function SiteNav() {
           ))}
         </nav>
         <div className="hidden lg:flex items-center gap-2">
+          <LangToggle />
           {user ? <Link to={ROLE_HOME[user.role]} className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-lg shadow-indigo-200">My Portal</Link> : <>
             <Link to="/login" className="px-4 py-2.5 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50">Sign in</Link>
             <Link to="/register" className="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold shadow-lg shadow-orange-200">Get started</Link>
           </>}
         </div>
-        <button onClick={() => setOpen(!open)} className="lg:hidden p-2 rounded-xl border border-slate-200">{open ? <X size={20} /> : <Menu size={20} />}</button>
+        <div className="lg:hidden flex items-center gap-2"><LangToggle /><button onClick={() => setOpen(!open)} className="p-2 rounded-xl border border-slate-200">{open ? <X size={20} /> : <Menu size={20} />}</button></div>
       </div>
       {open && (
         <div className="lg:hidden border-t border-slate-100 bg-white px-5 py-4 space-y-1">

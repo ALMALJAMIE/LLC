@@ -17,7 +17,7 @@ export function BrandLogo({ className, style }: Common) {
 /** Full horizontal lock-up: mark + LANGUAGE LEAP / CENTER (as in the LLC logo). */
 export function BrandLockup({ className = '', dark = false }: { className?: string; dark?: boolean }) {
   return (
-    <span className={`inline-flex items-center gap-2.5 select-none ${className}`}>
+    <span data-no-i18n className={`inline-flex items-center gap-2.5 select-none ${className}`}>
       <img src={mark} alt="" className="h-10 w-auto" />
       <span className="flex flex-col leading-none">
         <span className={`font-brand font-extrabold tracking-[0.12em] text-[15px] ${dark ? 'text-white' : 'text-indigo-800'}`}>LANGUAGE LEAP</span>

@@ -61,3 +61,23 @@ body { font-family: var(--font-sans); background-color: #fafafa; color: #1e293b;
 .no-scrollbar { scrollbar-width: none; }
 
 button { cursor: pointer; }
+
+/* ---------- Arabic / RTL ---------- */
+html[lang="ar"] body, html[lang="ar"] .font-sans, html[lang="ar"] .font-brand { font-family: "Cairo", "Poppins", sans-serif; }
+html[lang="ar"] .uppercase { letter-spacing: 0 !important; }
+html[dir="rtl"] .text-left { text-align: right; }
+html[dir="rtl"] .text-right { text-align: left; }
+html[dir="rtl"] .ml-auto { margin-left: 0; margin-right: auto; }
+html[dir="rtl"] .mr-auto { margin-right: 0; margin-left: auto; }
+html[dir="rtl"] .space-x-2 > :not(:last-child), html[dir="rtl"] .space-x-3 > :not(:last-child) { margin-inline-start: 0; }
+/* mobile sidebar slides in from the right */
+@media (max-width: 1023px) {
+  html[dir="rtl"] aside.fixed.left-0 { left: auto; right: 0; }
+  html[dir="rtl"] aside.fixed.-translate-x-full { --tw-translate-x: 100%; translate: 100% 0; }
+}
+/* mirror direction icons */
+html[dir="rtl"] .lucide-arrow-right, html[dir="rtl"] .lucide-arrow-left,
+html[dir="rtl"] .lucide-chevron-right, html[dir="rtl"] .lucide-chevron-left,
+html[dir="rtl"] .lucide-arrow-up-right, html[dir="rtl"] .lucide-log-out { transform: scaleX(-1); }
+/* keep code, emails, numbers in LTR */
+html[dir="rtl"] input[type="email"], html[dir="rtl"] input[type="url"], html[dir="rtl"] input[type="tel"], html[dir="rtl"] .font-mono { direction: ltr; }

@@ -16,7 +16,12 @@ import '@fontsource/plus-jakarta-sans/800.css';
 import '@fontsource/montserrat/600.css';
 import '@fontsource/montserrat/700.css';
 import '@fontsource/montserrat/800.css';
+import '@fontsource/cairo/400.css';
+import '@fontsource/cairo/600.css';
+import '@fontsource/cairo/700.css';
+import '@fontsource/cairo/800.css';
 import './index.css';
+import { initI18n } from './lib/i18n';
 import App from './App';
 
 createRoot(document.getElementById('root')!).render(
@@ -24,6 +29,7 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 );
+initI18n();
 
 // Auto-update: when the tab is reopened after a new deploy, reload so nobody keeps running an old copy.
 // (Only on returning to the tab, never in the middle of filling a form.)

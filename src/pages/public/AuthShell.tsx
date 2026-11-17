@@ -1,3 +1,4 @@
+import LangToggle from '../../components/LangToggle';
 import type { ReactNode } from 'react';
 import { BrandLockup } from '../../components/media';
 
@@ -19,6 +20,7 @@ export default function AuthShell({ children }: { children: ReactNode }) {
       </div>
       <div className="flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-md">
+          <div className="flex justify-end mb-4"><LangToggle /></div>
           <div className="lg:hidden mb-10"><BrandLockup /></div>
           {children}
         </div>

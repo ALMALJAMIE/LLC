@@ -1,3 +1,4 @@
+import LangToggle from '../LangToggle';
 import { Suspense, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, Menu, Type } from 'lucide-react';
@@ -16,6 +17,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
         <Link to={ROLE_HOME[user.role]} className="group flex items-center select-none cursor-pointer"><BrandLockup /></Link>
       </div>
       <div className="flex items-center gap-4 md:gap-6">
+        <LangToggle />
         <div className="relative">
           <button className="p-2 text-slate-500 hover:text-orange-500 bg-slate-50 hover:bg-orange-50 border border-slate-200 rounded-full transition-colors" title="Accessibility Settings"><Type size={20} /></button>
         </div>

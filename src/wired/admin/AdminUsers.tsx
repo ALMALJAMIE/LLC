@@ -8,7 +8,7 @@ import { fmtDate, useData } from '../../lib/db';
 import { Illus } from '../../components/media';
 import { DemoNotice, Field, Modal, Spinner, btnPrimary, inputCls, toast } from '../../components/ui';
 
-const ROLES = ['student', 'instructor', 'academic', 'finance', 'agent', 'admin'] as const;
+const ROLES = ['student', 'instructor', 'academic', 'finance', 'support', 'agent', 'admin'] as const;
 
 export default function AdminUsers() {
   const me = useAuth((s) => s.user);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Briefcase, GraduationCap, Loader2, Lock, Mail, Presentation, ShieldCheck, ClipboardCheck, Wallet } from 'lucide-react';
+import { ArrowRight, Briefcase, GraduationCap, Loader2, Lock, Mail, Presentation, ShieldCheck, ClipboardCheck, Wallet, Headset } from 'lucide-react';
 import AuthShell, { authBtn, authInput } from './AuthShell';
 import { DEMO_USERS, useAuth } from '../../lib/auth';
 import { ROLE_HOME, type Role } from '../../lib/nav';
@@ -11,6 +11,7 @@ const ROLES: { role: Role; label: string; icon: typeof GraduationCap; desc: stri
   { role: 'instructor', label: 'Instructor', icon: Presentation, desc: 'Batches, lessons, grading' },
   { role: 'academic', label: 'Academic Supervisor', icon: ClipboardCheck, desc: 'Courses, timetables, approvals' },
   { role: 'finance', label: 'Finance Officer', icon: Wallet, desc: 'Payments, invoices, payouts' },
+  { role: 'support', label: 'Student Support', icon: Headset, desc: 'Student files, messages, forms' },
   { role: 'agent', label: 'Agent', icon: Briefcase, desc: 'Enrollments & earnings' },
   { role: 'admin', label: 'Admin', icon: ShieldCheck, desc: 'Full platform control' },
 ];

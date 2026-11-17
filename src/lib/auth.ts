@@ -19,6 +19,7 @@ export const DEMO_USERS: Record<Role, SessionUser> = {
   instructor: { id: 'demo-instructor', name: 'Demo Instructor', email: 'instructor@llc-demo.com', role: 'instructor', demo: true },
   agent: { id: 'demo-agent', name: 'Demo Agent', email: 'agent@llc-demo.com', role: 'agent', demo: true },
   admin: { id: 'demo-admin', name: 'Demo Admin', email: 'admin@llc-demo.com', role: 'admin', demo: true },
+  support: { id: 'demo-support', name: 'Demo Support', email: 'support@llc-demo.com', role: 'support', demo: true },
   finance: { id: 'demo-finance', name: 'Demo Finance', email: 'finance@llc-demo.com', role: 'finance', demo: true },
   academic: { id: 'demo-academic', name: 'Demo Supervisor', email: 'academic@llc-demo.com', role: 'academic', demo: true },
 };

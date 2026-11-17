@@ -147,3 +147,18 @@ for (const path of ['/manage-profile', '/admin-enrollments', '/admin-financials'
   const c = WIRED[path]?.admin;
   if (c) WIRED[path] = { ...WIRED[path], finance: c };
 }
+
+// ---------------- Student support ----------------
+Object.assign(WIRED, {
+  '/support-dashboard': { support: named(() => import('./support/Support'), 'SupportDashboard') },
+  '/support/students': { support: named(() => import('./support/Support'), 'StudentDirectory') },
+  '/support/toolkit': { support: Toolkit },
+  '/support/reminders': { support: TaskManager },
+  '/support/community': { support: named(() => import('./community/Community'), 'CommunityAccess') },
+  '/support/community/feed/:hub': { support: named(() => import('./community/Community'), 'CommunityHub') },
+  '/admin/forms': { ...WIRED['/admin/forms'], support: FormBuilder },
+});
+for (const path of ['/manage-profile', '/admin/new-students']) {
+  const c = WIRED[path]?.admin;
+  if (c) WIRED[path] = { ...WIRED[path], support: c };
+}

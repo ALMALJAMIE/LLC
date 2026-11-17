@@ -27,7 +27,7 @@ export default function FormBuilder() {
   const [edit, setEdit] = useState<Partial<Form> | null>(null);
   const [view, setView] = useState<Form | null>(null);
   const { data, loading, reload } = useData<Form[]>(() => supabase.from('forms').select('*, responses:form_responses(count)').order('created_at', { ascending: false }));
-  const mine = (data ?? []).filter((f) => user?.role === 'admin' || f.owner_id === user?.id);
+  const mine = (data ?? []).filter((f) => user?.role === 'admin' || user?.role === 'support' || f.owner_id === user?.id);
   const toggle = async (f: Form) => { const { error } = await supabase.from('forms').update({ is_open: !f.is_open }).eq('id', f.id); if (error) toast.err(error.message); else reload(); };
   const del = async (f: Form) => { if (!confirm(`Delete “${f.title}” and all its responses?`)) return; const { error } = await supabase.from('forms').delete().eq('id', f.id); if (error) toast.err(error.message); else { toast.ok('Deleted'); reload(); } };
   const copy = (f: Form) => { navigator.clipboard?.writeText(formUrl(f.id)); toast.ok('Link copied'); };

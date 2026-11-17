@@ -6,14 +6,14 @@ import {
   SquareCheckBig, SquarePen, Star, Tag, UserCog, UserPlus, Users, Video, Wallet,
 } from 'lucide-react';
 
-export type Role = 'student' | 'instructor' | 'agent' | 'admin' | 'academic' | 'finance';
+export type Role = 'student' | 'instructor' | 'agent' | 'admin' | 'academic' | 'finance' | 'support';
 /** Admin or academic supervisor: runs the academic side (courses, batches, lessons, exams, placement…). */
 export const isAcademicLead = (r?: Role | null) => r === 'admin' || r === 'academic';
 export type NavItem = { label: string; icon: LucideIcon; to?: string; children?: NavItem[] };
 
-export const ROLE_LABEL: Record<Role, string> = { student: 'Student', instructor: 'Instructor', agent: 'Agent', admin: 'Admin', academic: 'Academic Supervisor', finance: 'Finance Officer' };
+export const ROLE_LABEL: Record<Role, string> = { student: 'Student', instructor: 'Instructor', agent: 'Agent', admin: 'Admin', academic: 'Academic Supervisor', finance: 'Finance Officer', support: 'Student Support' };
 export const ROLE_HOME: Record<Role, string> = {
-  student: '/student-dashboard', instructor: '/instructor-dashboard', agent: '/agent-dashboard', admin: '/admin-dashboard', academic: '/academic-dashboard', finance: '/finance-dashboard',
+  student: '/student-dashboard', instructor: '/instructor-dashboard', agent: '/agent-dashboard', admin: '/admin-dashboard', academic: '/academic-dashboard', finance: '/finance-dashboard', support: '/support-dashboard',
 };
 
 export const NAV: Record<Role, NavItem[]> = {
@@ -72,6 +72,16 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: 'Bank Details', icon: Building2, to: '/agent/bank-details' },
     { label: 'Form Builder', icon: ClipboardList, to: '/agent/forms' },
     { label: 'My Profile', icon: UserCog, to: '/manage-profile' },
+  ],
+  support: [
+    { label: 'Dashboard', icon: LayoutDashboard, to: '/support-dashboard' },
+    { label: 'Toolkit', icon: PenTool, to: '/support/toolkit' },
+    { label: 'Student Directory', icon: Users, to: '/support/students' },
+    { label: 'New Students', icon: UserPlus, to: '/admin/new-students' },
+    { label: 'Form Builder', icon: ClipboardList, to: '/admin/forms' },
+    { label: 'Community', icon: MessageCircle, to: '/support/community' },
+    { label: 'Task Manager', icon: SquareCheckBig, to: '/support/reminders' },
+    { label: 'Manage Profile', icon: UserCog, to: '/manage-profile' },
   ],
   finance: [
     { label: 'Dashboard', icon: LayoutDashboard, to: '/finance-dashboard' },

@@ -1,3 +1,4 @@
+import { useLang } from '../../lib/i18n';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, Award, BookOpen, BrainCircuit, CalendarCheck, CircleCheck, Globe, GraduationCap, Handshake, Laptop, MapPin, PlayCircle, QrCode, ShieldCheck, Sparkles, Star, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -51,6 +52,7 @@ function useAccreditations() {
 }
 
 export default function Home() {
+  const lang = useLang((x) => x.lang);
   const courses = usePublicCourses(6);
   const site = useCenter();
   const accr = useAccreditations();
@@ -66,7 +68,7 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto px-5 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28 grid lg:grid-cols-2 gap-14 items-center">
           <div>
             <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 shadow-sm"><Sparkles size={14} className="text-orange-500" />Online & face-to-face in Kuala Lumpur</span>
-            {site.heroTitle ? <h1 className="mt-6 text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.05]">{site.heroTitle}</h1> : <h1 className="mt-6 text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.05]">Your leap to <span className="text-indigo-600">fluent</span> <span className="relative whitespace-nowrap">English<svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none"><path d="M2 9C50 3 150 3 198 9" stroke="#e9a823" strokeWidth="5" strokeLinecap="round" /></svg></span></h1>}
+            {site.heroTitle ? <h1 className="mt-6 text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.05]">{site.heroTitle}</h1> : <h1 className="mt-6 text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.05]" data-no-i18n={lang === 'ar' ? '' : undefined}>{lang === 'ar' ? <>قفزتك نحو <span className="text-indigo-600">الإنجليزية</span> </> : <>Your leap to <span className="text-indigo-600">fluent</span> </>}<span className="relative whitespace-nowrap">{lang === 'ar' ? 'بطلاقة' : 'English'}<svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none"><path d="M2 9C50 3 150 3 198 9" stroke="#e9a823" strokeWidth="5" strokeLinecap="round" /></svg></span></h1>}
             <p className="mt-6 text-lg text-slate-500 leading-relaxed max-w-lg">{site.heroSubtitle}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/placement" className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-xl shadow-orange-200 transition-all"><BrainCircuit size={18} /> Take the free placement test</Link>

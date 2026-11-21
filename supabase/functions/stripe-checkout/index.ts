@@ -26,17 +26,16 @@ Deno.serve(async (req) => {
 
     const { payment_id } = await req.json();
     const { data: pay } = await db.from('payments')
-      .select('id, student_id, status, enrollment:enrollments(id, course:courses(title, code, price, currency))')
+      .select('id, student_id, status, amount, currency, description, invoice_no')
       .eq('id', payment_id).single();
     if (!pay || pay.student_id !== user.id) return json({ error: 'Payment not found.' }, 404);
     if (pay.status !== 'pending') return json({ error: 'This payment is already ' + pay.status + '.' }, 400);
-    const course = (pay.enrollment as any)?.course;
-    const price = Number(course?.price ?? 0);
-    if (!course || price <= 0) return json({ error: 'This course has no fee.' }, 400);
-    const currency = String(course.currency ?? 'MYR').toLowerCase();
-
-    // the amount always comes from the course price, never from the browser
-    await db.from('payments').update({ amount: price, currency: currency.toUpperCase(), method: 'card' }).eq('id', pay.id);
+    // the amount was worked out by the database (price, discount, tax) when the payment was created; the browser never sets it
+    const price = Number(pay.amount ?? 0);
+    if (price <= 0) return json({ error: 'Nothing to pay.' }, 400);
+    const currency = String(pay.currency ?? 'USD').toLowerCase();
+    await db.from('payments').update({ method: 'card' }).eq('id', pay.id);
+    const course = { title: pay.description ?? pay.invoice_no, code: pay.invoice_no };
 
     const form = new URLSearchParams({
       mode: 'payment',

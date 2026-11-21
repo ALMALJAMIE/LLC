@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Download, ExternalLink, EyeOff, FileText, History, LifeBuoy, Loader2, Lock, Plus, Save, Send, ShieldCheck, SquarePen, Trash2 } from 'lucide-react';
+import {  useMemo, useState } from 'react';
+import {  ExternalLink, EyeOff, FileText, History, LifeBuoy, Loader2, Lock, Plus, Save, Send, SquarePen, Trash2 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { fmtDateTime, useData } from '../../lib/db';

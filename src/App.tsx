@@ -18,6 +18,7 @@ const PublicForm = lazy(() => import('./wired/forms/Forms').then((m) => ({ defau
 import Register from './pages/public/Register';
 import { ForgotPassword, ResetPassword } from './pages/public/ForgotPassword';
 const VerifyCertificate = lazy(() => import('./pages/public/Content').then((m) => ({ default: m.VerifyCertificate })));
+const TrainingRequest = lazy(() => import('./pages/public/Training'));
 const BlogList = lazy(() => import('./pages/public/Content').then((m) => ({ default: m.BlogList })));
 const ContentPage = lazy(() => import('./pages/public/Content').then((m) => ({ default: m.ContentPage })));
 
@@ -54,6 +55,7 @@ export default function App() {
         <Route path="/f/:id" element={pub(PublicForm)} />
         <Route path="/placement" element={pub(PlacementLanding)} />
         <Route path="/agents" element={pub(AgentsLanding)} />
+        <Route path="/training" element={pub(TrainingRequest)} />
         <Route path="/verify" element={pub(VerifyCertificate)} />
         <Route path="/blog" element={pub(BlogList)} />
         <Route path="/blog/:slug" element={pub(() => <ContentPage kind="blog" />)} />

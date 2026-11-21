@@ -1,14 +1,15 @@
 import PlacementRequired from '../../components/PlacementRequired';
 import { usePlacementDone } from '../../lib/placement';
-import { payOnline } from '../../lib/stripe';
+import PayBox from '../../components/PayBox';
+import { CurrencyPicker, Price } from '../../lib/price';
 import { useMemo, useState } from 'react';
-import { BookOpen, CalendarDays, ChevronRight, Clock, Funnel, Globe, Layers, Loader2, MapPin, Search, Upload, Users } from 'lucide-react';
+import { BookOpen, CalendarDays, ChevronRight, Clock, Funnel, Globe, Layers, MapPin, Search, Users } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
-import { fmtDate, money, useData } from '../../lib/db';
-import { useCenter } from '../../lib/site';
+import { fmtDate, useData } from '../../lib/db';
+
 import { CoverImg, Illus } from '../../components/media';
-import { DemoNotice, Field, Modal, Spinner, StatusPill, btnAccent, btnGhost, inputCls, toast } from '../../components/ui';
+import { DemoNotice, Field, Modal, Spinner, StatusPill } from '../../components/ui';
 import type { Batch, Course } from './types';
 
 const DELIVERY: Record<string, string> = { online: 'Online', face_to_face: 'Face to Face', hybrid: 'Hybrid' };
@@ -47,6 +48,7 @@ export default function StudentCourses() {
                   <option value="all">All Courses</option><option value="free">Free Only</option><option value="paid">Paid Only</option>
                 </select>
               </div>
+              <CurrencyPicker className="self-center" />
             </div>
           </div>
           <div className="w-full lg:w-1/2 flex justify-center lg:justify-end relative">
@@ -89,46 +91,10 @@ export default function StudentCourses() {
 }
 
 function CourseDetails({ course: c, status, onClose, onDone }: { course: Course; status?: string; onClose: () => void; onDone: () => void }) {
-  const CENTER = useCenter();
-  const user = useAuth((s) => s.user)!;
-  const free = Number(c.price) === 0;
   const batches = useData<Batch[]>(() =>
     supabase.from('batches').select('*, instructor:profiles(full_name)').eq('course_id', c.id).in('status', ['upcoming', 'active']).order('start_date'));
   const [batchId, setBatchId] = useState<number | ''>('');
-  const [ref, setRef] = useState('');
-  const [receipt, setReceipt] = useState<File | null>(null);
   const placed = usePlacementDone();
-  const [busy, setBusy] = useState(false);
-  const [method, setMethod] = useState<'card' | 'bank'>('card');
-  const online = !!CENTER.bank.onlinePay && !free;
-  const byCard = online && method === 'card';
-
-  const enroll = async () => {
-    if (user.demo) return toast.err('Sign in with a real account to enroll.');
-    if (!free && !byCard && !receipt) return toast.err('Please attach your payment receipt.');
-    setBusy(true);
-    const { data: en, error } = await supabase.from('enrollments')
-      .insert({ student_id: user.id, course_id: c.id, batch_id: batchId || null, status: 'pending', source: 'self' }).select('id').single();
-    if (error) { setBusy(false); return toast.err(error.code === '23505' ? 'You already requested this course.' : error.message); }
-    if (byCard) {
-      const pay = await supabase.from('payments').insert({ student_id: user.id, enrollment_id: en.id, amount: c.price, currency: c.currency, method: 'card', status: 'pending' }).select('id').single();
-      if (pay.error) { setBusy(false); return toast.err(pay.error.message); }
-      const err = await payOnline(pay.data.id);
-      setBusy(false);
-      if (err) { toast.err(err); onDone(); }
-      return;
-    }
-    if (!free && receipt) {
-      const path = `${user.id}/receipts/${en.id}-${Date.now()}-${receipt.name.replace(/[^\w.-]/g, '_')}`;
-      const up = await supabase.storage.from('uploads').upload(path, receipt);
-      if (up.error) { setBusy(false); return toast.err(up.error.message); }
-      const pay = await supabase.from('payments').insert({ student_id: user.id, enrollment_id: en.id, amount: c.price, currency: c.currency, method: 'bank_transfer', reference: ref || null, receipt_url: path, status: 'pending' });
-      if (pay.error) { setBusy(false); return toast.err(pay.error.message); }
-    }
-    setBusy(false);
-    toast.ok('Enrollment request sent. We will confirm it shortly.');
-    onDone();
-  };
 
   return (
     <Modal open onClose={onClose} title={c.title} wide>
@@ -151,7 +117,7 @@ function CourseDetails({ course: c, status, onClose, onDone }: { course: Course;
             <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100">{c.code}</span>
             {c.category && <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-orange-600 bg-orange-50 px-2.5 py-1 rounded-md border border-orange-100">{c.category.name}</span>}
             <p className="text-slate-600 text-sm leading-relaxed mt-3">{c.description}</p>
-            <p className="text-2xl font-extrabold text-slate-900 mt-3">{free ? 'Free' : money(c.price, c.currency)}</p>
+            <Price className="block text-2xl font-extrabold text-slate-900 mt-3" amount={c.price} cur={c.currency} />
           </div>
 
           {!status && placed === false ? <PlacementRequired compact /> : status ? (
@@ -174,31 +140,7 @@ function CourseDetails({ course: c, status, onClose, onDone }: { course: Course;
                   </div>
                 )}
               </Field>
-              {online && (
-                <div className="grid grid-cols-2 gap-2">
-                  {([['card', 'Pay online', 'Card / FPX'], ['bank', 'Bank transfer', 'Upload receipt']] as const).map(([k, l, d]) => (
-                    <button key={k} type="button" onClick={() => setMethod(k)} className={`p-3 rounded-xl border text-left transition-all ${method === k ? 'border-orange-400 bg-orange-50' : 'border-slate-200 hover:border-slate-300'}`}>
-                      <p className="text-sm font-bold text-slate-800">{l}</p><p className="text-[11px] text-slate-500">{d}</p>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {byCard && <p className="text-xs text-slate-500 p-3 rounded-xl bg-indigo-50 border border-indigo-100">You will go to a secure Stripe page to pay. Your enrollment is confirmed after the payment.</p>}
-              {!free && !byCard && (
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-3">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Pay by bank transfer</p>
-                  <div className="text-sm text-slate-600 grid grid-cols-3 gap-y-1"><span className="text-slate-400">Bank</span><span className="col-span-2 font-semibold">{CENTER.bank.bankName}</span><span className="text-slate-400">Account name</span><span className="col-span-2 font-semibold">{CENTER.bank.accountName}</span><span className="text-slate-400">Account no.</span><span className="col-span-2 font-semibold">{CENTER.bank.accountNo}</span></div>
-                  <input className={inputCls} placeholder="Transfer reference (optional)" value={ref} onChange={(e) => setRef(e.target.value)} />
-                  <label className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-slate-300 bg-white cursor-pointer hover:border-orange-400 text-sm text-slate-600">
-                    <Upload size={18} className="text-slate-400" /> {receipt ? receipt.name : 'Attach payment receipt (image or PDF)'}
-                    <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => setReceipt(e.target.files?.[0] ?? null)} />
-                  </label>
-                </div>
-              )}
-              <div className="flex gap-3 justify-end">
-                <button onClick={onClose} className={btnGhost}>Cancel</button>
-                <button onClick={enroll} disabled={busy} className={btnAccent}>{busy && <Loader2 size={16} className="animate-spin" />} {free ? 'Request Enrollment' : byCard ? 'Continue to payment' : 'Submit & Enroll'}</button>
-              </div>
+              <PayBox kind="course" item={c.id} batch={batchId || null} label="Request Enrollment" onCancel={onClose} onDone={onDone} />
             </>
           )}
         </div>

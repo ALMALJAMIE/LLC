@@ -1,5 +1,7 @@
+import { Link } from 'react-router-dom';
+import { useBilling } from '../../lib/site';
 import { useMemo, useState } from 'react';
-import { CalendarPlus, CheckCircle2, Clock, Loader2, MapPin, Plus, Video, X } from 'lucide-react';
+import { CalendarPlus, CheckCircle2, Clock, Loader2, MapPin, Plus, Ticket, Video, X } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { isAcademicLead } from '../../lib/nav';
 import { supabase } from '../../lib/supabase';
@@ -132,6 +134,8 @@ export function StudentPrivateSessions() {
   const [pick, setPick] = useState<Slot | null>(null);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
+  const billing = useBilling();
+  const credits = useData<number>(() => supabase.rpc('credits_left'), []);
   const mine = (data ?? []).filter((s) => s.booked_by === user.id && s.status === 'booked');
   const free = (data ?? []).filter((s) => s.status === 'open' && new Date(s.starts_at).getTime() > Date.now() + 2 * 3600000);
   const days = useMemo(() => { const m = new Map<string, Slot[]>(); free.forEach((s) => m.set(dayKey(s.starts_at), [...(m.get(dayKey(s.starts_at)) ?? []), s])); return [...m.entries()]; }, [free]);
@@ -142,17 +146,24 @@ export function StudentPrivateSessions() {
     const { error } = await supabase.rpc('book_private_slot', { p_slot: pick.id, p_note: note });
     setBusy(false);
     if (error) return toast.err(error.message);
-    toast.ok('Session booked — your instructor was notified'); setPick(null); setNote(''); reload();
+    toast.ok('Session booked — your instructor was notified'); setPick(null); setNote(''); reload(); credits.reload();
   };
   const cancel = async (s: Slot) => {
     if (!(await askConfirm('Cancel this booking?'))) return;
-    const { error } = await supabase.rpc('cancel_private_booking', { p_slot: s.id }); if (error) toast.err(error.message); else { toast.ok('Booking cancelled'); reload(); }
+    const { error } = await supabase.rpc('cancel_private_booking', { p_slot: s.id }); if (error) toast.err(error.message); else { toast.ok('Booking cancelled'); reload(); credits.reload(); }
   };
   return (
     <Page>
       {user.demo && <DemoNotice />}
       <PageHero badge="Learning" badgeColor="indigo" title="Private Sessions" illus="calendar" subtitle="Book a one-to-one session with an instructor at a time that suits you. You can cancel up to 24 hours before." />
       {placed === false ? <PlacementRequired /> : loading ? <Spinner /> : <>
+        {!user.demo && (billing.privateNeedsCredit || Number(credits.data) > 0) && (
+          <div className="mb-6 p-4 rounded-2xl bg-indigo-50 border border-indigo-100 flex flex-wrap items-center gap-3">
+            <Ticket size={20} className="text-indigo-600" />
+            <p className="flex-1 text-sm text-indigo-900"><b>{`${credits.data ?? 0} sessions left`}</b>{billing.privateNeedsCredit ? ' · each booking uses one session from your package' : ''}</p>
+            <Link to="/student/plans" className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold">Buy sessions</Link>
+          </div>
+        )}
         {mine.length > 0 && <div className="mb-8"><h2 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-3">My bookings</h2>
           <div className="space-y-2">{mine.map((s) => (
             <div key={s.id} className="bg-white rounded-2xl border border-emerald-100 p-4 flex flex-wrap items-center gap-3">

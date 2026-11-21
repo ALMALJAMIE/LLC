@@ -2,21 +2,27 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Award, BookOpen, CalendarPlus, DoorOpen, BrainCircuit, Building2, Calendar, CalendarRange, ChartNoAxesColumn, CircleCheckBig, ClipboardCheck,
   ClipboardList, Clock, CreditCard, DollarSign, FileQuestionMark, FileText, GraduationCap, Inbox, Layers, LayoutDashboard,
-  LifeBuoy, ListChecks, ListOrdered, Flag, Lock, MessageCircle, MonitorPlay, NotebookPen, PenLine, PenTool, Percent, ShieldCheck, ShoppingBag,
+  LifeBuoy, ListChecks, ListOrdered, Crown, Ticket, Undo2, Receipt, Settings, Building2 as Org, Handshake, Flag, Lock, MessageCircle, MonitorPlay, NotebookPen, PenLine, PenTool, Percent, ShieldCheck, ShoppingBag,
   SquareCheckBig, SquarePen, Star, Tag, UserCog, UserPlus, Users, Video, Wallet,
 } from 'lucide-react';
 
-export type Role = 'student' | 'instructor' | 'agent' | 'admin' | 'academic' | 'finance' | 'support';
+export type Role = 'student' | 'instructor' | 'agent' | 'admin' | 'academic' | 'finance' | 'support' | 'institution';
 /** Admin or academic supervisor: runs the academic side (courses, batches, lessons, exams, placement…). */
 export const isAcademicLead = (r?: Role | null) => r === 'admin' || r === 'academic';
 export type NavItem = { label: string; icon: LucideIcon; to?: string; children?: NavItem[] };
 
-export const ROLE_LABEL: Record<Role, string> = { student: 'Student', instructor: 'Instructor', agent: 'Agent', admin: 'Admin', academic: 'Academic Supervisor', finance: 'Finance Officer', support: 'Student Support' };
+export const ROLE_LABEL: Record<Role, string> = { student: 'Student', instructor: 'Instructor', agent: 'Agent', admin: 'Admin', academic: 'Academic Supervisor', finance: 'Finance Officer', support: 'Student Support', institution: 'Institution' };
 export const ROLE_HOME: Record<Role, string> = {
-  student: '/student-dashboard', instructor: '/instructor-dashboard', agent: '/agent-dashboard', admin: '/admin-dashboard', academic: '/academic-dashboard', finance: '/finance-dashboard', support: '/support-dashboard',
+  student: '/student-dashboard', instructor: '/instructor-dashboard', agent: '/agent-dashboard', admin: '/admin-dashboard', academic: '/academic-dashboard', finance: '/finance-dashboard', support: '/support-dashboard', institution: '/institution-dashboard',
 };
 
 export const NAV: Record<Role, NavItem[]> = {
+  institution: [
+    { label: 'Dashboard', icon: LayoutDashboard, to: '/institution-dashboard' },
+    { label: 'Invoices & Payments', icon: CreditCard, to: '/institution/finances' },
+    { label: 'Help Desk', icon: LifeBuoy, to: '/help-desk' },
+    { label: 'Manage Profile', icon: UserCog, to: '/manage-profile' },
+  ],
   student: [
     { label: 'Dashboard', icon: LayoutDashboard, to: '/student-dashboard' },
     { label: 'Student Toolkit', icon: PenTool, to: '/student/toolkit' },
@@ -24,6 +30,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: 'Community', icon: MessageCircle, to: '/student/community' },
     { label: 'Task Manager', icon: SquareCheckBig, to: '/student/reminders' },
     { label: 'Buy Courses', icon: ShoppingBag, to: '/student/courses' },
+    { label: 'Plans & Packages', icon: Crown, to: '/student/plans' },
     { label: 'Placement Tests Dashboard', icon: BrainCircuit, to: '/student/assessments' },
     { label: 'My Courses', icon: BookOpen, to: '/student/my-learning' },
     { label: 'My Classes', icon: Video, to: '/student/live-sessions' },
@@ -91,6 +98,8 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: 'Community', icon: MessageCircle, to: '/support/community' },
     { label: 'Task Manager', icon: SquareCheckBig, to: '/support/reminders' },
     { label: 'Support Tickets', icon: LifeBuoy, to: '/support/tickets' },
+    { label: 'Organisations', icon: Org, to: '/admin/organisations' },
+    { label: 'Training Requests', icon: Handshake, to: '/admin/training-requests' },
     { label: 'Reported Posts', icon: Flag, to: '/admin/community-reports' },
     { label: 'Website Pages', icon: FileText, to: '/admin/pages' },
     { label: 'Manage Profile', icon: UserCog, to: '/manage-profile' },
@@ -107,6 +116,21 @@ export const NAV: Record<Role, NavItem[]> = {
         { label: 'Commissions', icon: DollarSign, to: '/admin/agent-earnings' },
         { label: 'Payouts', icon: Wallet, to: '/admin/agent-payouts' },
         { label: 'Commission Rules', icon: Percent, to: '/admin/commission-rules' },
+      ],
+    },
+    {
+      label: 'Billing', icon: Receipt, children: [
+        { label: 'Invoices', icon: Receipt, to: '/admin/invoices' },
+        { label: 'Refunds', icon: Undo2, to: '/admin/refunds' },
+        { label: 'Discount Codes', icon: Percent, to: '/admin/discount-codes' },
+        { label: 'Plans & Packages', icon: Ticket, to: '/admin/plans' },
+        { label: 'Billing Settings', icon: Settings, to: '/admin/billing-settings' },
+      ],
+    },
+    {
+      label: 'Institutions', icon: Org, children: [
+        { label: 'Organisations', icon: Org, to: '/admin/organisations' },
+        { label: 'Training Requests', icon: Handshake, to: '/admin/training-requests' },
       ],
     },
     { label: 'Help Desk', icon: LifeBuoy, to: '/help-desk' },
@@ -214,6 +238,21 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: 'New Students', icon: UserPlus, to: '/admin/new-students' },
     { label: 'Users', icon: Users, to: '/admin-users' },
     { label: 'Financials', icon: DollarSign, to: '/admin-financials' },
+    {
+      label: 'Billing', icon: Receipt, children: [
+        { label: 'Invoices', icon: Receipt, to: '/admin/invoices' },
+        { label: 'Refunds', icon: Undo2, to: '/admin/refunds' },
+        { label: 'Discount Codes', icon: Percent, to: '/admin/discount-codes' },
+        { label: 'Plans & Packages', icon: Ticket, to: '/admin/plans' },
+        { label: 'Billing Settings', icon: Settings, to: '/admin/billing-settings' },
+      ],
+    },
+    {
+      label: 'Institutions', icon: Org, children: [
+        { label: 'Organisations', icon: Org, to: '/admin/organisations' },
+        { label: 'Training Requests', icon: Handshake, to: '/admin/training-requests' },
+      ],
+    },
     { label: 'Audit Logs', icon: FileText, to: '/admin-audit-logs' },
     { label: 'Website CMS', icon: PenLine, to: '/admin/cms' },
     { label: 'Website Pages', icon: FileText, to: '/admin/pages' },

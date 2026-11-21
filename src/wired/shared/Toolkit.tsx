@@ -57,7 +57,7 @@ export default function Toolkit() {
   const user = useAuth((s) => s.user);
   const [q, setQ] = useState('');
   if (!user) return null;
-  const title = { student: 'Student Toolkit', instructor: 'Teacher Toolkit', agent: 'Agent Toolkit', admin: 'System Toolkit', academic: 'Academic Toolkit', finance: 'Finance Toolkit', support: 'Support Toolkit' }[user.role];
+  const title = { student: 'Student Toolkit', instructor: 'Teacher Toolkit', agent: 'Agent Toolkit', admin: 'System Toolkit', academic: 'Academic Toolkit', finance: 'Finance Toolkit', support: 'Support Toolkit', institution: 'Institution Toolkit' }[user.role];
   const items = NAV[user.role].filter((n) => !n.to?.includes('toolkit'));
   const groups: [string, NavItem[]][] = [['Main Operations', items.filter((n) => n.to)], ...items.filter((n) => n.children).map((n) => [n.label, n.children!] as [string, NavItem[]])];
   const match = (n: NavItem) => `${n.label} ${DESC[n.to ?? ''] ?? ''}`.toLowerCase().includes(q.toLowerCase());

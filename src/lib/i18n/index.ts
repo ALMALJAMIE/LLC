@@ -7,10 +7,11 @@ import ar5 from './ar5';
 import ar6 from './ar6';
 import ar7 from './ar7';
 import ar8 from './ar8';
+import ar9 from './ar9';
 
 export type Lang = 'en' | 'ar';
 const KEY = 'llc-lang';
-const AR: Record<string, string> = { ...ar1, ...ar2, ...ar3, ...ar4, ...ar5, ...ar6, ...ar7, ...ar8 };
+const AR: Record<string, string> = { ...ar1, ...ar2, ...ar3, ...ar4, ...ar5, ...ar6, ...ar7, ...ar8, ...ar9 };
 
 // Status / enum words, matched case-insensitively ("ACTIVE", "Active", "face_to_face"…)
 const WORDS: Record<string, string> = {
@@ -29,6 +30,45 @@ const WORDS: Record<string, string> = {
 
 // Dynamic text: patterns tried when there is no exact match.
 const PATTERNS: [RegExp, (...m: string[]) => string][] = [
+  [/^Due (.+)$/, (_, d) => `مستحق في ${d}`],
+  [/^Saved (.+?)( · (.+))?$/, (_, a, _b, c) => `وفّرت ${a}${c ? ` · ${c}` : ''}`],
+  [/^Refunded (.+)$/, (_, a) => `مُسترد ${a}`],
+  [/^(.+) refunded$/, (_, a) => `استُرد ${a}`],
+  [/^−(.+) discount$/, (_, a) => `خصم ${a}`],
+  [/^(\d+) sessions left$/, (_, n) => `متبقٍ لك ${n} حصة`],
+  [/^Refunds can be requested within (\d+) days of payment\.$/, (_, n) => `يمكن طلب الاسترداد خلال ${n} يومًا من الدفع.`],
+  [/^Active until (.+)$/, (_, d) => `فعّالة حتى ${d}`],
+  [/^(\d+) from (.+) · use before (.+)$/, (_, n, s, d) => `${n} من ${s} · تُستخدم قبل ${d}`],
+  [/^(\d+) private sessions included$/, (_, n) => `${n} حصص فردية مشمولة`],
+  [/^(\d+) one-to-one sessions · use within (\d+) days(.*)$/, (_, n, d, r) => `${n} حصص فردية · تُستخدم خلال ${d} يومًا${r}`],
+  [/^every (\d+) months$/, (_, n) => `كل ${n} أشهر`],
+  [/^used (\d+)( of (\d+))?$/, (_, n, _b, m) => `استُخدم ${n}${m ? ` من ${m}` : ''}`],
+  [/^saved (.+)$/, (_, a) => `وفّر ${a}`],
+  [/^paid (.+?)( on (.+))?$/, (_, a, _b, d) => `دُفع ${a}${d ? ` في ${d}` : ''}`],
+  [/^asked (.+)$/, (_, d) => `طُلب في ${d}`],
+  [/^Due (.+)$/, (_, d) => `مستحق في ${d}`],
+  [/^due (.+)$/, (_, d) => `يُستحق في ${d}`],
+  [/^Answer: (.+)$/, (_, a) => `الرد: ${a}`],
+  [/^(\d+) private sessions · (\d+) courses$/, (_, a, b) => `${a} حصص فردية · ${b} دورات`],
+  [/^(\d+) active$/, (_, n) => `${n} نشط`],
+  [/^(\d+) sessions · (\d+) days$/, (_, a, b) => `${a} حصص · ${b} يومًا`],
+  [/^(\d+) of (\d+) used$/, (_, a, b) => `استُخدم ${a} من ${b}`],
+  [/^until (.+)$/, (_, d) => `حتى ${d}`],
+  [/^from (.+)$/, (_, d) => `من ${d}`],
+  [/^New \((\d+)\)$/, (_, n) => `جديدة (${n})`],
+  [/^To send \((\d+)\)$/, (_, n) => `بانتظار الإرسال (${n})`],
+  [/^Amount \(paid (.+?), up to (.+)\)$/, (_, a, b) => `المبلغ (المدفوع ${a}، والحد الأقصى ${b})`],
+  [/^(\d+) \/ (\d+) seats$/, (_, a, b) => `${a} / ${b} مقعد`],
+  [/^(\d+) licences · (\d+) seats$/, (_, a, b) => `${a} تراخيص · ${b} مقعد`],
+  [/^Note: (.+)$/, (_, a) => `ملاحظة: ${a}`],
+  [/^Remove (.+) as manager\?$/, (_, a) => `إزالة ${a} من الإدارة؟`],
+  [/^Cancel invoice (.+)\?$/, (_, a) => `إلغاء الفاتورة ${a}؟`],
+  [/^Create the organisation "(.+)" from this request\?$/, (_, a) => `إنشاء المؤسسة «${a}» من هذا الطلب؟`],
+  [/^Give a seat on "(.+)" to a learner\. Write the email of their LLC student account:$/, (_, a) => `امنح مقعدًا في «${a}» لمتعلم. اكتب بريد حساب الطالب الخاص به في LLC:`],
+  [/^Remove (.+) from this course\? The seat becomes free for someone else\.$/, (_, a) => `إزالة ${a} من هذه الدورة؟ سيصبح المقعد متاحًا لغيره.`],
+  [/^Ask for a refund of (.+?) for "(.+)"\. Why do you want a refund\?$/, (_, a, b) => `طلب استرداد ${a} عن «${b}». ما سبب طلب الاسترداد؟`],
+  [/^End (.+)'s plan now\? Write a short reason \(shown in the record\):$/, (_, a) => `إنهاء خطة ${a} الآن؟ اكتب سببًا مختصرًا (يُحفظ في السجل):`],
+  [/^Discount \((.*)\)$/, (_, a) => `الخصم (${a})`],
   [/^updated (.+)$/, (_, d) => `آخر تحديث ${d}`],
   [/^Open \((\d+)\)$/, (_, n) => `مفتوحة (${n})`],
   [/^Waiting for user \((\d+)\)$/, (_, n) => `بانتظار المستخدم (${n})`],

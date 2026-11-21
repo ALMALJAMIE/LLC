@@ -1,8 +1,8 @@
+import { Price } from '../../lib/price';
 import { useLang } from '../../lib/i18n';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, Award, BookOpen, BrainCircuit, CalendarCheck, CircleCheck, Globe, GraduationCap, Handshake, Laptop, MapPin, PlayCircle, QrCode, ShieldCheck, Sparkles, Star, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { money } from '../../lib/db';
 import { useEffect, useState } from 'react';
 import { CoverImg } from '../../components/media';
 import { SiteShell, WhatsAppFab } from './Site';
@@ -32,7 +32,7 @@ export function CourseCard({ c }: { c: C }) {
         <p className="text-[10px] font-black uppercase tracking-wider text-orange-500">{c.delivery.replace(/_/g, ' ')} · {c.duration_weeks ?? '—'} weeks</p>
         <h3 className="text-lg font-extrabold text-slate-900 mt-1 group-hover:text-indigo-700">{c.title}</h3>
         <p className="text-sm text-slate-500 line-clamp-2 mt-1 flex-1">{c.description}</p>
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-50"><span className="font-black text-slate-900">{Number(c.price) ? money(c.price, c.currency) : 'Free'}</span><span className="text-xs font-black uppercase text-indigo-600 flex items-center gap-1">Details <ArrowRight size={14} /></span></div>
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-50"><Price className="font-black text-slate-900" amount={c.price} cur={c.currency} /><span className="text-xs font-black uppercase text-indigo-600 flex items-center gap-1">Details <ArrowRight size={14} /></span></div>
       </div>
     </Link>
   );

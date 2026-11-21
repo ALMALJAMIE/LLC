@@ -1,7 +1,7 @@
+import { CurrencyPicker, Price } from '../../lib/price';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BookOpen, Clock, Globe, Layers, MapPin, Search } from 'lucide-react';
-import { money } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import { CoverImg } from '../../components/media';
 import { Modal } from '../../components/ui';
@@ -24,6 +24,7 @@ export default function Catalog() {
         <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-2xl">
           <div className="relative flex-1"><Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by course or level…" className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-orange-200" /></div>
           <div className="inline-flex bg-white p-1 rounded-2xl border border-slate-200">{[['all', 'All'], ['online', 'Online'], ['face_to_face', 'In class'], ['hybrid', 'Hybrid']].map(([k, l]) => <button key={k} onClick={() => setMode(k)} className={`px-4 py-2 rounded-xl text-sm font-bold ${mode === k ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>{l}</button>)}</div>
+          <CurrencyPicker className="self-center" />
         </div>
       </section>
       <section className="max-w-7xl mx-auto px-5 lg:px-8 pb-24">
@@ -36,7 +37,7 @@ export default function Catalog() {
             <div className="md:col-span-3">
               <p className="text-slate-600 leading-relaxed">{sel.description}</p>
               <div className="grid grid-cols-2 gap-2 mt-5 text-sm">
-                {[{ i: Layers, l: 'Level', v: sel.level ? `${sel.level.name} (${sel.level.cefr ?? ''})` : 'All levels' }, { i: Clock, l: 'Duration', v: `${sel.duration_weeks ?? '—'} weeks` }, { i: sel.delivery === 'face_to_face' ? MapPin : Globe, l: 'Delivery', v: sel.delivery.replace(/_/g, ' ') }, { i: BookOpen, l: 'Fee', v: Number(sel.price) ? money(sel.price, sel.currency) : 'Free' }].map(({ i: I, l, v }) => (
+                {[{ i: Layers, l: 'Level', v: sel.level ? `${sel.level.name} (${sel.level.cefr ?? ''})` : 'All levels' }, { i: Clock, l: 'Duration', v: `${sel.duration_weeks ?? '—'} weeks` }, { i: sel.delivery === 'face_to_face' ? MapPin : Globe, l: 'Delivery', v: sel.delivery.replace(/_/g, ' ') }, { i: BookOpen, l: 'Fee', v: <Price amount={sel.price} cur={sel.currency} /> }].map(({ i: I, l, v }) => (
                   <div key={l} className="p-3 rounded-xl bg-slate-50 border border-slate-100"><p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1"><I size={12} />{l}</p><p className="font-bold text-slate-800 capitalize">{v}</p></div>
                 ))}
               </div>

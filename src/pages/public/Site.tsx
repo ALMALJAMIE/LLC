@@ -69,6 +69,7 @@ export function SiteFooter() {
         <div>
           <p className="text-xs font-black uppercase tracking-widest text-white mb-4">Explore</p>
           <ul className="space-y-2 text-sm">{LINKS.map((l) => <li key={l.to}><Link to={l.to} className="hover:text-orange-400">{l.label}</Link></li>)}
+            <li><Link to="/training" className="hover:text-orange-400">For organisations</Link></li>
             <li><Link to="/blog" className="hover:text-orange-400">Blog</Link></li>
             <li><Link to="/verify" className="hover:text-orange-400">Check a certificate</Link></li></ul>
         </div>

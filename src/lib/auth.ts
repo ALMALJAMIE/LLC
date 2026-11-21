@@ -22,6 +22,7 @@ export const DEMO_USERS: Record<Role, SessionUser> = {
   support: { id: 'demo-support', name: 'Demo Support', email: 'support@llc-demo.com', role: 'support', demo: true },
   finance: { id: 'demo-finance', name: 'Demo Finance', email: 'finance@llc-demo.com', role: 'finance', demo: true },
   academic: { id: 'demo-academic', name: 'Demo Supervisor', email: 'academic@llc-demo.com', role: 'academic', demo: true },
+  institution: { id: 'demo-institution', name: 'Demo Institution', email: 'institution@llc-demo.com', role: 'institution', demo: true },
 };
 
 type AuthState = {

@@ -195,3 +195,23 @@ for (const path of ['/manage-profile', '/admin/new-students']) {
     '/admin/privacy': { admin: privacy },
   });
 }
+
+// ---------------- Billing (admin + finance), plans, institutions ----------------
+{
+  const com = (n: string) => named(() => import('./finance/Commerce'), n);
+  const inst = (n: string) => named(() => import('./institution/Institution'), n);
+  const money2 = { admin: 1, finance: 1 } as const;
+  for (const [path, comp] of [['/admin/discount-codes', com('DiscountCodes')], ['/admin/refunds', com('Refunds')], ['/admin/invoices', com('Invoices')], ['/admin/plans', com('PlansAdmin')], ['/admin/billing-settings', com('BillingSettings')]] as const) {
+    WIRED[path] = Object.fromEntries(Object.keys(money2).map((r) => [r, comp]));
+  }
+  const orgs = inst('Organisations'), reqs = inst('TrainingRequests');
+  Object.assign(WIRED, {
+    '/student/plans': { student: lazy(() => import('./student/StudentPlans')) },
+    '/admin/organisations': { admin: orgs, finance: orgs, support: orgs },
+    '/admin/training-requests': { admin: reqs, finance: reqs, support: reqs },
+    '/institution-dashboard': { institution: inst('InstitutionDashboard') },
+    '/institution/finances': { institution: lazy(() => import('./student/StudentFinances')) },
+  });
+  WIRED['/help-desk'] = { ...WIRED['/help-desk'], institution: WIRED['/help-desk'].student };
+  WIRED['/manage-profile'] = { ...WIRED['/manage-profile'], institution: WIRED['/manage-profile'].admin };
+}

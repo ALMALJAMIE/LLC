@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { fmtDate, useData } from '../../lib/db';
 import { DemoNotice, Modal, Page, PageHero, Spinner, StatusPill, toast } from '../../components/ui';
 import { LessonView } from '../shared/LessonView';
-import type { Lesson } from '../shared/CurriculumEditor';
+import type { Lesson } from '../shared/Curriculum';
 import { notify } from './AdminEnrollments';
 
 type L = Lesson & { submitted_at: string | null; unit: { title: string; course: { title: string } | null } | null; author: { full_name: string } | null };

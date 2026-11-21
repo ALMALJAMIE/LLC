@@ -7,10 +7,12 @@ const TaskManager = lazy(() => import('./shared/TaskManager'));
 const AcademicCalendar = lazy(() => import('./shared/AcademicCalendar'));
 const ClassScheduler = lazy(() => import('./shared/ClassScheduler'));
 const AbsenceApprovals = lazy(() => import('./shared/AbsenceApprovals'));
-const CurriculumEditor = lazy(() => import('./shared/CurriculumEditor'));
+const named = <K extends string>(loader: () => Promise<Record<K, React.ComponentType>>, k: K) => lazy(() => loader().then((m) => ({ default: m[k] })));
+const CurriculumList = named(() => import('./shared/Curriculum'), 'CurriculumList');
+const CurriculumBuilder = named(() => import('./shared/Curriculum'), 'CurriculumBuilder');
+const CurriculumPreview = named(() => import('./shared/Curriculum'), 'CurriculumPreview');
 const FormBuilder = lazy(() => import('./forms/Forms'));
 const Toolkit = lazy(() => import('./shared/Toolkit'));
-const named = <K extends string>(loader: () => Promise<Record<K, React.ComponentType>>, k: K) => lazy(() => loader().then((m) => ({ default: m[k] })));
 
 /** Screens that are connected to the database. They replace the static layout for the same route. */
 export const WIRED: Record<string, Partial<Record<Role, C>>> = {
@@ -71,16 +73,22 @@ export const WIRED: Record<string, Partial<Record<Role, C>>> = {
   '/admin/agent-earnings': { admin: named(() => import('./admin/AgentAdmin'), 'AdminAgentEarnings') },
   '/admin/agent-payouts': { admin: named(() => import('./admin/AgentAdmin'), 'AdminAgentPayouts') },
   '/admin/commission-rules': { admin: named(() => import('./admin/AgentAdmin'), 'AdminCommissionRules') },
-  '/admin-curriculum': { admin: CurriculumEditor },
-  '/instructor/lessons': { instructor: CurriculumEditor },
+  '/admin-curriculum': { admin: CurriculumList },
+  '/admin-curriculum/:id/edit': { admin: CurriculumBuilder },
+  '/admin-curriculum/:id/view': { admin: CurriculumPreview },
+  '/instructor/lessons': { instructor: CurriculumList },
+  '/instructor/lessons/:id/edit': { instructor: CurriculumBuilder },
+  '/instructor/lessons/:id/view': { instructor: CurriculumPreview },
   '/admin/lessons/review': { admin: lazy(() => import('./admin/LessonApprovals')) },
   '/student/course/:id': { student: lazy(() => import('./student/CoursePlayer')) },
   '/student/assessments': { student: named(() => import('./placement/Student'), 'StudentPlacement') },
   '/student/placement/:id': { student: named(() => import('./placement/Student'), 'PlacementTake') },
-  '/admin-placement-tests': { admin: named(() => import('./placement/Staff'), 'PlacementTestsAdmin') },
-  '/admin-placement-tests/:id/manage': { admin: named(() => import('./placement/Staff'), 'QuestionBank') },
-  '/instructor/placement-tests': { instructor: named(() => import('./placement/Staff'), 'PlacementTestsAdmin') },
-  '/instructor/placement-tests/:id/manage': { instructor: named(() => import('./placement/Staff'), 'QuestionBank') },
+  '/admin-placement-tests': { admin: named(() => import('./placement/Tests'), 'PlacementTestsAdmin') },
+  '/admin-placement-tests/:id/manage': { admin: named(() => import('./placement/Tests'), 'TestBuilder') },
+  '/admin-placement-tests/:id/details': { admin: named(() => import('./placement/Tests'), 'TestDetails') },
+  '/instructor/placement-tests': { instructor: named(() => import('./placement/Tests'), 'PlacementTestsAdmin') },
+  '/instructor/placement-tests/:id/manage': { instructor: named(() => import('./placement/Tests'), 'TestBuilder') },
+  '/instructor/placement-tests/:id/details': { instructor: named(() => import('./placement/Tests'), 'TestDetails') },
   '/admin/level-config': { admin: named(() => import('./placement/Staff'), 'LevelConfig') },
   '/admin-placement-requests': { admin: named(() => import('./placement/Staff'), 'PlacementResults') },
   '/instructor/placement-requests': { instructor: named(() => import('./placement/Staff'), 'PlacementResults') },
@@ -126,8 +134,8 @@ Object.assign(WIRED, {
 for (const path of [
   '/manage-profile', '/academic-calendar', '/admin/live-sessions',
   '/admin-academic-session', '/admin-categories', '/admin-levels', '/admin-courses', '/admin-batches',
-  '/admin-curriculum', '/admin/lessons/review', '/admin/timetable', '/admin/master-timetable', '/admin/substitutes', '/admin/absence-approvals',
-  '/admin-placement-tests', '/admin-placement-tests/:id/manage', '/admin/level-config', '/admin-placement-requests',
+  '/admin-curriculum', '/admin-curriculum/:id/edit', '/admin-curriculum/:id/view', '/admin/lessons/review', '/admin/timetable', '/admin/master-timetable', '/admin/substitutes', '/admin/absence-approvals',
+  '/admin-placement-tests', '/admin-placement-tests/:id/manage', '/admin-placement-tests/:id/details', '/admin/level-config', '/admin-placement-requests',
   '/admin/exam-templates', '/admin-grading-scales', '/admin-rubrics-bank', '/admin-certificate-templates', '/admin-reviews',
 ]) {
   const c = WIRED[path]?.admin;

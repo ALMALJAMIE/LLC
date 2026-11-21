@@ -1,110 +1,12 @@
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, BrainCircuit, Check, Clock, ListChecks, Loader2, Plus, RotateCcw, Save, SquarePen, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Check, Loader2, PenLine, RotateCcw, Save } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { isAcademicLead } from '../../lib/nav';
 import { supabase } from '../../lib/supabase';
 import { fmtDateTime, useData } from '../../lib/db';
-import { DemoNotice, Field, Modal, Page, PageHero, Spinner, StatusPill, btnPrimary, inputCls, toast } from '../../components/ui';
-import EntityGrid from '../admin/EntityGrid';
+import { DemoNotice, Field, Modal, Page, PageHero, Spinner, btnPrimary, inputCls, toast } from '../../components/ui';
+import type { Question } from './Tests';
 import { notify } from '../admin/AdminEnrollments';
-
-type T = { id: number; title: string; description: string | null; duration_min: number; is_active: boolean; placement_questions: { count: number }[] };
-const base = (role: string) => (role === 'admin' || role === 'academic' ? '/admin-placement-tests' : '/instructor/placement-tests');
-
-export function PlacementTestsAdmin() {
-  const user = useAuth((s) => s.user)!;
-  const nav = useNavigate();
-  return (
-    <EntityGrid<T> table="placement_tests" select="*, placement_questions(count)" badge="Placement" badgeTone="indigo" title="Placement Tests" illus="exam" addLabel="Create Test"
-      subtitle="Online tests students take to find their level. They are graded automatically and mapped to a level using the score bands."
-      defaults={{ duration_min: 30, is_active: true }} searchText={(r) => r.title}
-      fields={[{ k: 'title', label: 'Title', required: true }, { k: 'description', label: 'Instructions for students', type: 'textarea' }, { k: 'duration_min', label: 'Time limit (minutes)', type: 'number', half: true, required: true }, { k: 'is_active', label: 'Open to students', type: 'checkbox' }]}
-      toRow={(f) => ({ ...f, duration_min: Number(f.duration_min) })}
-      card={(r) => (
-        <>
-          <div className="flex justify-between items-start mb-3"><span className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 grid place-items-center"><BrainCircuit size={22} /></span><StatusPill status={r.is_active ? 'active' : 'cancelled'} /></div>
-          <h3 className="text-lg font-bold text-slate-900">{r.title}</h3>
-          <p className="text-xs text-slate-500 flex gap-3 mt-1"><span className="flex items-center gap-1"><Clock size={12} />{r.duration_min} min</span><span className="flex items-center gap-1"><ListChecks size={12} />{r.placement_questions?.[0]?.count ?? 0} questions</span></p>
-          <button onClick={() => nav(`${base(user.role)}/${r.id}/manage`)} className="mt-4 w-full py-2.5 rounded-xl bg-slate-900 hover:bg-orange-500 text-white text-xs font-bold">Manage Questions</button>
-        </>
-      )} />
-  );
-}
-
-type Q = { id: number; test_id: number; section: string; passage: string | null; audio_url: string | null; prompt: string; options: string[]; correct_index: number; points: number; sort_order: number };
-const SECTIONS = ['grammar', 'vocabulary', 'reading', 'listening'];
-
-export function QuestionBank() {
-  const { id } = useParams();
-  const tid = Number(id);
-  const user = useAuth((s) => s.user)!;
-  const nav = useNavigate();
-  const test = useData<{ title: string }>(() => supabase.from('placement_tests').select('title').eq('id', tid).maybeSingle(), [tid]);
-  const qs = useData<Q[]>(() => supabase.from('placement_questions').select('*').eq('test_id', tid).order('section').order('sort_order').order('id'), [tid]);
-  const [edit, setEdit] = useState<Partial<Q> | null>(null);
-  const del = async (q: Q) => { if (!confirm('Delete this question?')) return; const { error } = await supabase.from('placement_questions').delete().eq('id', q.id); if (error) toast.err(error.message); else qs.reload(); };
-  return (
-    <Page>
-      {user.demo && <DemoNotice />}
-      <div className="flex items-center gap-3 mb-6"><button onClick={() => nav(base(user.role))} className="w-10 h-10 rounded-full bg-white border border-slate-200 grid place-items-center"><ArrowLeft size={18} /></button>
-        <div className="flex-1"><p className="text-[10px] font-black uppercase text-indigo-600">Question Bank</p><h1 className="text-2xl font-extrabold text-slate-900">{test.data?.title}</h1></div>
-        <button onClick={() => setEdit({ test_id: tid, section: 'grammar', options: ['', '', '', ''], correct_index: 0, points: 1, sort_order: (qs.data?.length ?? 0) + 1 })} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900 hover:bg-orange-500 text-white text-sm font-bold"><Plus size={16} /> Add Question</button></div>
-      {qs.loading ? <Spinner /> : SECTIONS.map((sec) => {
-        const list = (qs.data ?? []).filter((q) => q.section === sec);
-        if (!list.length) return null;
-        return (
-          <div key={sec} className="mb-8">
-            <h2 className="text-xs font-black uppercase tracking-[0.25em] text-orange-500 mb-3">{sec} · {list.length}</h2>
-            <div className="space-y-3">{list.map((q) => (
-              <div key={q.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5">
-                <div className="flex gap-3"><p className="flex-1 font-bold text-slate-900">{q.prompt}</p>
-                  <button onClick={() => setEdit(q)} className="p-1.5 text-slate-400 hover:text-blue-600"><SquarePen size={16} /></button><button onClick={() => del(q)} className="p-1.5 text-slate-400 hover:text-red-500"><Trash2 size={16} /></button></div>
-                {q.passage && <p className="text-xs text-slate-400 line-clamp-1 mt-1">Passage: {q.passage}</p>}
-                <div className="grid sm:grid-cols-2 gap-2 mt-3">{q.options.map((o, i) => <span key={i} className={`px-3 py-2 rounded-xl text-sm border ${i === q.correct_index ? 'bg-emerald-50 border-emerald-200 text-emerald-800 font-bold' : 'border-slate-100 text-slate-600'}`}>{String.fromCharCode(65 + i)}. {o} {i === q.correct_index && <Check size={14} className="inline" />}</span>)}</div>
-              </div>
-            ))}</div>
-          </div>
-        );
-      })}
-      {!qs.loading && !qs.data?.length && <p className="text-center text-slate-400 py-12">No questions yet.</p>}
-      {edit && <QForm q={edit} onClose={() => setEdit(null)} onDone={() => { setEdit(null); qs.reload(); }} />}
-    </Page>
-  );
-}
-
-function QForm({ q, onClose, onDone }: { q: Partial<Q>; onClose: () => void; onDone: () => void }) {
-  const [f, setF] = useState({ section: q.section ?? 'grammar', passage: q.passage ?? '', audio_url: q.audio_url ?? '', prompt: q.prompt ?? '', options: q.options ?? ['', '', '', ''], correct_index: q.correct_index ?? 0, points: q.points ?? 1 });
-  const [busy, setBusy] = useState(false);
-  const save = async () => {
-    const opts = f.options.map((o) => o.trim()).filter(Boolean);
-    if (!f.prompt.trim() || opts.length < 2) return toast.err('Write the question and at least two options.');
-    if (f.correct_index >= opts.length) return toast.err('Choose which option is correct.');
-    setBusy(true);
-    const row = { test_id: q.test_id, section: f.section, passage: f.passage || null, audio_url: f.audio_url || null, prompt: f.prompt.trim(), options: opts, correct_index: f.correct_index, points: Number(f.points) || 1, sort_order: q.sort_order ?? 0 };
-    const { error } = q.id ? await supabase.from('placement_questions').update(row).eq('id', q.id) : await supabase.from('placement_questions').insert(row);
-    setBusy(false);
-    if (error) toast.err(error.message); else { toast.ok('Question saved'); onDone(); }
-  };
-  return (
-    <Modal open onClose={onClose} title={q.id ? 'Edit Question' : 'Add Question'} wide>
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3"><Field label="Section"><select className={inputCls} value={f.section} onChange={(e) => setF({ ...f, section: e.target.value })}>{SECTIONS.map((s) => <option key={s}>{s}</option>)}</select></Field>
-          <Field label="Points"><input type="number" className={inputCls} value={f.points} onChange={(e) => setF({ ...f, points: Number(e.target.value) })} /></Field></div>
-        {(f.section === 'reading' || f.passage) && <Field label="Reading passage (shared by questions with the same text)"><textarea rows={4} className={inputCls} value={f.passage} onChange={(e) => setF({ ...f, passage: e.target.value })} /></Field>}
-        {f.section === 'listening' && <Field label="Audio link (mp3)"><input className={inputCls} value={f.audio_url} onChange={(e) => setF({ ...f, audio_url: e.target.value })} /></Field>}
-        <Field label="Question"><input className={inputCls} value={f.prompt} onChange={(e) => setF({ ...f, prompt: e.target.value })} placeholder="She ___ a teacher." /></Field>
-        <Field label="Options — tick the correct one">
-          <div className="space-y-2">{f.options.map((o, i) => (
-            <div key={i} className="flex items-center gap-2"><input type="radio" checked={f.correct_index === i} onChange={() => setF({ ...f, correct_index: i })} className="accent-emerald-600 w-4 h-4" />
-              <span className="font-black text-slate-400 w-4">{String.fromCharCode(65 + i)}</span><input className={inputCls} value={o} onChange={(e) => { const op = [...f.options]; op[i] = e.target.value; setF({ ...f, options: op }); }} /></div>
-          ))}{f.options.length < 6 && <button type="button" onClick={() => setF({ ...f, options: [...f.options, ''] })} className="text-xs font-bold text-orange-500">+ Add option</button>}</div>
-        </Field>
-        <button disabled={busy} onClick={save} className={`${btnPrimary} w-full`}>{busy ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save Question</button>
-      </div>
-    </Modal>
-  );
-}
 
 type Band = { id: number; level_id: number; min_pct: number; max_pct: number };
 export function LevelConfig() {
@@ -142,14 +44,15 @@ export function LevelConfig() {
   );
 }
 
-type R = { id: number; student_id: string; status: string; pct: number | null; late: boolean; submitted_at: string | null; review_note: string | null; final_level_id: number | null; section_scores: Record<string, { score: number; total: number }> | null;
-  student: { full_name: string; email: string; phone: string | null } | null; test: { title: string } | null; suggested: { id: number; name: string } | null; final: { name: string } | null };
+type R = { id: number; test_id: number; student_id: string; status: string; answers: Record<string, number | string>; manual_scores: Record<string, number>; interview_score: number | null; interview_total: number | null; interview_note: string | null; needs_marking: boolean; score: number | null; total: number | null; pct: number | null; late: boolean; submitted_at: string | null; review_note: string | null; final_level_id: number | null; section_scores: Record<string, { score: number; total: number }> | null;
+  student: { full_name: string; email: string; phone: string | null } | null; test: { title: string; config: string } | null; suggested: { id: number; name: string } | null; final: { name: string } | null };
 export function PlacementResults() {
   const user = useAuth((s) => s.user)!;
   const [tab, setTab] = useState('submitted');
-  const { data, loading, reload } = useData<R[]>(() => supabase.from('placement_attempts').select('id,student_id,status,pct,late,submitted_at,review_note,final_level_id,section_scores, student:profiles!placement_attempts_student_id_fkey(full_name,email,phone), test:placement_tests(title), suggested:levels!placement_attempts_suggested_level_id_fkey(id,name), final:levels!placement_attempts_final_level_id_fkey(name)').neq('status', 'in_progress').order('submitted_at', { ascending: false }));
+  const { data, loading, reload } = useData<R[]>(() => supabase.from('placement_attempts').select('id,test_id,student_id,status,pct,score,total,late,submitted_at,review_note,final_level_id,section_scores,answers,manual_scores,interview_score,interview_total,interview_note,needs_marking, student:profiles!placement_attempts_student_id_fkey(full_name,email,phone), test:placement_tests(title,config), suggested:levels!placement_attempts_suggested_level_id_fkey(id,name), final:levels!placement_attempts_final_level_id_fkey(name)').neq('status', 'in_progress').order('submitted_at', { ascending: false }));
   const levels = useData<{ id: number; name: string }[]>(() => supabase.from('levels').select('id,name').order('sort_order'));
   const [open, setOpen] = useState<R | null>(null);
+  const [mark, setMark] = useState<R | null>(null);
   const [lvl, setLvl] = useState('');
   const [note, setNote] = useState('');
   const list = (data ?? []).filter((r) => tab === 'all' || r.status === tab);
@@ -177,10 +80,11 @@ export function PlacementResults() {
             <tbody className="divide-y divide-slate-100">{list.map((r) => (
               <tr key={r.id}><td className="px-4 py-3"><p className="font-bold">{r.student?.full_name}</p><p className="text-[11px] text-slate-400">{r.student?.email} · {fmtDateTime(r.submitted_at)}</p></td>
                 <td className="px-3 py-3 text-xs">{r.test?.title}{r.late && <span className="ml-1 text-red-500 font-bold">(late)</span>}</td>
-                <td className="px-3 py-3 font-black text-lg">{r.pct}%</td>
+                <td className="px-3 py-3"><span className="font-black text-lg">{r.pct}%</span>{r.needs_marking && <span className="block text-[10px] font-bold text-amber-600 uppercase">Needs marking</span>}</td>
                 <td className="px-3 py-3 text-[11px]">{r.section_scores && Object.entries(r.section_scores).map(([k, v]) => <span key={k} className="inline-block mr-2 capitalize">{k}: <b>{v.score}/{v.total}</b></span>)}</td>
                 <td className="px-3 py-3">{r.final ? <span className="font-bold text-emerald-700">{r.final.name}</span> : <span className="text-slate-500">Suggested: <b>{r.suggested?.name ?? '—'}</b></span>}</td>
                 <td className="px-3 py-3 text-right whitespace-nowrap"><button onClick={() => { setOpen(r); setLvl(String(r.final_level_id ?? r.suggested?.id ?? '')); setNote(r.review_note ?? ''); }} className="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold">{r.status === 'reviewed' ? 'Edit' : 'Confirm'}</button>
+                  <button title="Mark answers / interview" onClick={() => setMark(r)} className="ml-1 p-1.5 text-slate-400 hover:text-indigo-600"><PenLine size={15} /></button>
                   <button title="Allow retake" onClick={() => retake(r)} className="ml-1 p-1.5 text-slate-400 hover:text-orange-500"><RotateCcw size={15} /></button></td></tr>
             ))}{!list.length && <tr><td colSpan={6} className="p-8 text-center text-slate-400 text-xs">Nothing here.</td></tr>}</tbody></table>
         </div>
@@ -188,11 +92,66 @@ export function PlacementResults() {
       <Modal open={!!open} onClose={() => setOpen(null)} title={`Confirm level · ${open?.student?.full_name ?? ''}`}>
         <div className="space-y-4">
           <p className="text-sm text-slate-500">Score {open?.pct}% · suggested <b>{open?.suggested?.name ?? '—'}</b></p>
+          {open?.needs_marking && <p className="text-xs p-3 rounded-xl bg-amber-50 border border-amber-100 text-amber-800">Some written answers are not marked yet. Mark them first (pen icon) so the score and suggested level are complete.</p>}
           <Field label="Final level"><select className={inputCls} value={lvl} onChange={(e) => setLvl(e.target.value)}><option value="">— Select —</option>{(levels.data ?? []).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}</select></Field>
           <Field label="Note to student (optional)"><textarea rows={3} className={inputCls} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Strong reading; practise past tenses." /></Field>
           <button onClick={confirmLevel} className={`${btnPrimary} w-full`}><Check size={16} /> Confirm Level</button>
         </div>
       </Modal>
+      {mark && <MarkModal r={mark} onClose={() => setMark(null)} onDone={() => { setMark(null); reload(); }} />}
     </Page>
+  );
+}
+
+/** Mark typed answers and record the interview; the server recalculates the score and suggested level. */
+function MarkModal({ r, onClose, onDone }: { r: R; onClose: () => void; onDone: () => void }) {
+  const qs = useData<Question[]>(() => supabase.from('placement_questions').select('*').eq('test_id', r.test_id).neq('qtype', 'mcq').order('sort_order').order('id'), [r.test_id]);
+  const interview = r.test?.config !== 'written';
+  const [m, setM] = useState<Record<string, string>>({});
+  const [iv, setIv] = useState({ score: r.interview_score != null ? String(r.interview_score) : '', total: r.interview_total != null ? String(r.interview_total) : '', note: r.interview_note ?? '' });
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { setM(Object.fromEntries(Object.entries(r.manual_scores ?? {}).map(([k, v]) => [k, String(v)]))); }, [r]);
+  const save = async () => {
+    const manual: Record<string, number> = {};
+    for (const q of qs.data ?? []) {
+      const v = m[q.id]; if (v === undefined || v === '') continue;
+      const n = Number(v); if (Number.isNaN(n) || n < 0 || n > q.points) return toast.err(`Marks for "${q.prompt.slice(0, 30)}…" must be between 0 and ${q.points}.`);
+      manual[q.id] = n;
+    }
+    let isc: number | null = null, itot: number | null = null;
+    if (interview && (iv.score !== '' || iv.total !== '')) {
+      isc = Number(iv.score); itot = Number(iv.total);
+      if (!(itot > 0) || Number.isNaN(isc) || isc < 0 || isc > itot) return toast.err('Interview score must be between 0 and the interview total.');
+    }
+    setBusy(true);
+    const { error } = await supabase.rpc('mark_placement', { p_attempt: r.id, p_manual: manual, p_interview: isc, p_interview_total: itot, p_interview_note: iv.note });
+    setBusy(false);
+    if (error) toast.err(error.message); else { toast.ok('Marks saved — score updated'); onDone(); }
+  };
+  return (
+    <Modal open onClose={onClose} title={`Mark · ${r.student?.full_name ?? ''}`} wide>
+      {qs.loading ? <Spinner /> : (
+        <div className="space-y-4">
+          {!(qs.data ?? []).length && !interview && <p className="text-sm text-slate-400">This test has no written answers or interview to mark — it is graded automatically.</p>}
+          {(qs.data ?? []).map((q) => (
+            <div key={q.id} className="p-4 rounded-2xl border border-slate-100">
+              {q.context && <p className="text-[11px] font-bold text-indigo-600">{q.context}</p>}
+              <p className="font-semibold text-slate-800 text-sm">{q.prompt}</p>
+              <p className="mt-2 p-3 rounded-xl bg-slate-50 text-sm whitespace-pre-line min-h-10">{String(r.answers?.[q.id] ?? '') || <span className="text-slate-400">No answer</span>}</p>
+              <div className="flex items-center gap-2 mt-2"><span className="text-xs font-bold text-slate-500">Marks</span><input type="number" min={0} max={q.points} className={`${inputCls} w-24`} value={m[q.id] ?? ''} onChange={(e) => setM({ ...m, [q.id]: e.target.value })} /><span className="text-xs text-slate-400">/ {q.points}</span></div>
+            </div>
+          ))}
+          {interview && (
+            <div className="p-4 rounded-2xl border border-indigo-100 bg-indigo-50/40 space-y-3">
+              <p className="text-xs font-black uppercase text-indigo-600">Interview</p>
+              <div className="grid grid-cols-2 gap-3"><Field label="Score"><input type="number" className={inputCls} value={iv.score} onChange={(e) => setIv({ ...iv, score: e.target.value })} /></Field>
+                <Field label="Out of"><input type="number" className={inputCls} value={iv.total} onChange={(e) => setIv({ ...iv, total: e.target.value })} placeholder="20" /></Field></div>
+              <Field label="Interviewer notes"><textarea rows={2} className={inputCls} value={iv.note} onChange={(e) => setIv({ ...iv, note: e.target.value })} /></Field>
+            </div>
+          )}
+          <button disabled={busy} onClick={save} className={`${btnPrimary} w-full`}>{busy ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save Marks</button>
+        </div>
+      )}
+    </Modal>
   );
 }

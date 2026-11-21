@@ -2,10 +2,11 @@ import { create } from 'zustand';
 import ar1 from './ar1';
 import ar2 from './ar2';
 import ar3 from './ar3';
+import ar4 from './ar4';
 
 export type Lang = 'en' | 'ar';
 const KEY = 'llc-lang';
-const AR: Record<string, string> = { ...ar1, ...ar2, ...ar3 };
+const AR: Record<string, string> = { ...ar1, ...ar2, ...ar3, ...ar4 };
 
 // Status / enum words, matched case-insensitively ("ACTIVE", "Active", "face_to_face"…)
 const WORDS: Record<string, string> = {
@@ -38,6 +39,15 @@ const PATTERNS: [RegExp, (...m: string[]) => string][] = [
   [/^(\d+) min$/, (_, n) => `${n} د`],
   [/^(\d+) weeks?$/, (_, n) => `${n} أسابيع`],
   [/^(\d+) days?$/, (_, n) => `${n} أيام`],
+  [/^(\d+) Modules?$/, (_, n) => `${n} وحدات`],
+  [/^(\d+) elements?$/, (_, n) => `${n} عناصر`],
+  [/^(\d+) (Pts|pts|Points)$/, (_, n) => `${n} درجة`],
+  [/^(\d+) Mins?$/, (_, n) => `${n} دقيقة`],
+  [/^(\d+) agents only$/, (_, n) => `${n} وكلاء فقط`],
+  [/^Version: (.+)$/, (_, v) => `النسخة: ${v}`],
+  [/^Content Modules \((\d+)\)$/, (_, n) => `وحدات المحتوى (${n})`],
+  [/^Content Elements · (\d+)$/, (_, n) => `عناصر المحتوى · ${n}`],
+  [/^Your score: (\d+) \/ (\d+) \((\d+)%\)$/, (_, a, b, c) => `درجتك: ${a} / ${b} (${c}%)`],
   [/^Page (\d+) of (\d+)$/, (_, a, b) => `صفحة ${a} من ${b}`],
   [/^Welcome back, (.+?)( 👋)?$/, (_, n, e) => `مرحبًا بعودتك، ${n}${e ?? ''}`],
   [/^Welcome, (.+)$/, (_, n) => `مرحبًا، ${n}`],

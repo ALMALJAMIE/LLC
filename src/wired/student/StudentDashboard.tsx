@@ -1,3 +1,5 @@
+import PlacementRequired from '../../components/PlacementRequired';
+import { usePlacementDone } from '../../lib/placement';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Award, Bell, ChartColumn, CircleCheck, CirclePlay, Clock, CreditCard, Layers, PenTool, User, Zap } from 'lucide-react';
@@ -35,6 +37,7 @@ async function load(uid: string) {
 }
 
 export default function StudentDashboard() {
+  const placed = usePlacementDone();
   const user = useAuth((s) => s.user)!;
   const nav = useNavigate();
   const [hideBanner, setHideBanner] = useState(() => localStorage.getItem('llc-notif') === '1' || (typeof Notification !== 'undefined' && Notification.permission !== 'default'));
@@ -60,6 +63,7 @@ export default function StudentDashboard() {
     <div className="w-full bg-[#fafafa] text-[#1e293b] font-sans min-h-screen pb-20 overflow-x-hidden">
       <main className="w-full px-6 lg:px-8 py-8">
         {user.demo && <DemoNotice />}
+        {placed === false && <div className="mb-6"><PlacementRequired /></div>}
         <div className="bg-white rounded-4xl border border-slate-100 shadow-sm p-8 mb-10 flex flex-col lg:flex-row items-center justify-between relative overflow-hidden">
           <div className="z-10 w-full lg:w-1/2 mt-6 lg:mt-0">
             <span className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold uppercase tracking-wider mb-4 border border-indigo-100 shadow-sm"><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />Student Portal</span>

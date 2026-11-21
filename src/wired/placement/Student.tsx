@@ -46,7 +46,7 @@ export function StudentPlacement() {
           );
         })}</div>
       )}
-      {tests.loading ? <Spinner /> : !tests.data?.length ? <p className="text-center text-slate-400 py-12">No placement test is open right now.</p> : (
+      {tests.loading ? <Spinner /> : !tests.data?.length ? <p className="text-center text-slate-500 py-12">No placement test is open right now. Please contact LLC on WhatsApp so we can arrange your placement.</p> : (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">{tests.data.map((t) => {
           const a = (atts.data ?? []).find((x) => x.test_id === t.id);
           return (

@@ -191,5 +191,17 @@ const ar4: Record<string, string> = {
   "e.g. BIG QUESTION 1: Why do we protect animals?": "مثال: BIG QUESTION 1: Why do we protect animals?",
   "OK": "موافق",
   "Delete": "حذف",
+  "Take the placement test first": "خذ اختبار تحديد المستوى أولًا",
+  "You can browse every course and its details. To enroll and start studying, take the placement test so we can place you at the right level.": "يمكنك تصفح كل الدورات وتفاصيلها. وللتسجيل والبدء في الدراسة، خذ اختبار تحديد المستوى لنضعك في المستوى المناسب.",
+  "Start the placement test": "ابدأ اختبار تحديد المستوى",
+  "No placement test is open right now. Please contact LLC on WhatsApp so we can arrange your placement.": "لا يوجد اختبار تحديد مستوى مفتوح الآن. تواصل مع LLC عبر واتساب لترتيب تحديد مستواك.",
+  "Exempt from the placement test": "إعفاء من اختبار تحديد المستوى",
+  "Reason, e.g. placed by interview at the centre": "السبب، مثل: حُدّد مستواه بمقابلة في المركز",
+  "Commissions and payouts are in US dollars (USD). Your bank converts the amount to your local currency when it arrives.": "العمولات والسحوبات بالدولار الأمريكي (USD)، ويحوّل بنكك المبلغ إلى عملتك المحلية عند وصوله.",
+  "Price (USD, 0 = free)": "السعر (دولار، 0 = مجاني)",
+  "Amount (USD)": "المبلغ (دولار)",
+  "Fixed amount (USD)": "مبلغ ثابت (دولار)",
+  "Please take the placement test before enrolling in a course.": "خذ اختبار تحديد المستوى قبل التسجيل في أي دورة.",
+  "Please take the placement test first.": "خذ اختبار تحديد المستوى أولًا.",
 };
 export default ar4;

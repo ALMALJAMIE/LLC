@@ -85,12 +85,12 @@ export default function AdminUsers() {
 
 function ManageUser({ u, onClose, onDone }: { u: Profile; onClose: () => void; onDone: () => void }) {
   const me = useAuth((s) => s.user);
-  const [f, setF] = useState({ full_name: u.full_name, phone: u.phone ?? '', role: u.role, is_active: u.is_active });
+  const [f, setF] = useState({ full_name: u.full_name, phone: u.phone ?? '', role: u.role, is_active: u.is_active, placement_exempt: !!(u as Profile & { placement_exempt?: boolean }).placement_exempt, placement_exempt_note: (u as Profile & { placement_exempt_note?: string | null }).placement_exempt_note ?? '' });
   const [busy, setBusy] = useState(false);
   const save = async () => {
     if (u.id === me?.id && f.role !== 'admin') return toast.err('You cannot remove your own admin role.');
     setBusy(true);
-    const { error } = await supabase.from('profiles').update({ ...f, phone: f.phone || null }).eq('id', u.id);
+    const { error } = await supabase.from('profiles').update({ ...f, phone: f.phone || null, placement_exempt_note: f.placement_exempt ? f.placement_exempt_note || null : null }).eq('id', u.id);
     if (!error && f.role === 'agent') await supabase.from('agent_profiles').upsert({ id: u.id, status: 'approved' }, { onConflict: 'id' });
     setBusy(false);
     if (error) toast.err(error.message); else { toast.ok('User updated'); onDone(); }
@@ -107,6 +107,10 @@ function ManageUser({ u, onClose, onDone }: { u: Profile; onClose: () => void; o
         <Field label="Phone"><input className={inputCls} value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>
         <Field label="Role"><select className={`${inputCls} capitalize`} value={f.role} onChange={(e) => setF({ ...f, role: e.target.value as Profile['role'] })}>{ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select></Field>
         <label className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold"><input type="checkbox" className="accent-orange-500 w-4 h-4" checked={f.is_active} onChange={(e) => setF({ ...f, is_active: e.target.checked })} /> Account active</label>
+        {f.role === 'student' && <div className="p-3 rounded-xl bg-indigo-50/60 border border-indigo-100 space-y-2">
+          <label className="flex items-center gap-3 text-sm font-semibold"><input type="checkbox" className="accent-indigo-600 w-4 h-4" checked={f.placement_exempt} onChange={(e) => setF({ ...f, placement_exempt: e.target.checked })} /> Exempt from the placement test</label>
+          {f.placement_exempt && <input className={inputCls} value={f.placement_exempt_note} onChange={(e) => setF({ ...f, placement_exempt_note: e.target.value })} placeholder="Reason, e.g. placed by interview at the centre" />}
+        </div>}
         <div className="flex gap-2"><button onClick={reset} className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 hover:bg-slate-50">Send password reset</button>
           <button disabled={busy} onClick={save} className={`${btnPrimary} flex-1`}>{busy && <Loader2 size={16} className="animate-spin" />} Save</button></div>
       </div>

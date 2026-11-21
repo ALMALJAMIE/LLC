@@ -1,3 +1,5 @@
+import PlacementRequired from '../../components/PlacementRequired';
+import { usePlacementDone } from '../../lib/placement';
 import { payOnline } from '../../lib/stripe';
 import { useMemo, useState } from 'react';
 import { BookOpen, CalendarDays, ChevronRight, Clock, Funnel, Globe, Layers, Loader2, MapPin, Search, Upload, Users } from 'lucide-react';
@@ -95,6 +97,7 @@ function CourseDetails({ course: c, status, onClose, onDone }: { course: Course;
   const [batchId, setBatchId] = useState<number | ''>('');
   const [ref, setRef] = useState('');
   const [receipt, setReceipt] = useState<File | null>(null);
+  const placed = usePlacementDone();
   const [busy, setBusy] = useState(false);
   const [method, setMethod] = useState<'card' | 'bank'>('card');
   const online = !!CENTER.bank.onlinePay && !free;
@@ -151,7 +154,7 @@ function CourseDetails({ course: c, status, onClose, onDone }: { course: Course;
             <p className="text-2xl font-extrabold text-slate-900 mt-3">{free ? 'Free' : money(c.price, c.currency)}</p>
           </div>
 
-          {status ? (
+          {!status && placed === false ? <PlacementRequired compact /> : status ? (
             <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100 text-sm text-indigo-700 flex items-center gap-2">Your request for this course: <StatusPill status={status} /></div>
           ) : (
             <>

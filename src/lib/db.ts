@@ -21,8 +21,10 @@ export function useData<T>(fn: () => PromiseLike<{ data: any; error: { message: 
   return { data, loading, error, reload: run, demo: !!user?.demo };
 }
 
-export const money = (n: number | string | null | undefined, cur = 'MYR') =>
-  `${cur} ${Number(n ?? 0).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+export const money = (n: number | string | null | undefined, cur = 'USD') => {
+  const v = Number(n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return cur === 'USD' ? `$${v}` : `${cur} ${v}`;
+};
 export const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
 export const fmtDateTime = (d?: string | null) =>
   d ? new Date(d).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';

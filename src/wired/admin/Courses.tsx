@@ -12,14 +12,14 @@ export function AdminCourses() {
   return (
     <EntityGrid<Course> table="courses" select="*, category:categories(name), level:levels(name)" order="code" badge="Curriculum Management" title="Course Directory" illus="courses" addLabel="Create New Course"
       subtitle="Create, manage, and organize your educational content."
-      defaults={{ status: 'published', delivery: 'online', currency: 'MYR', price: 0, units_count: 8 }}
+      defaults={{ status: 'published', delivery: 'online', currency: 'USD', price: 0, units_count: 8 }}
       fields={[
         { k: 'code', label: 'Code', required: true, half: true, ph: 'LLC-GE07' }, { k: 'status', label: 'Status', type: 'select', half: true, required: true, options: [{ value: 'draft', label: 'Draft' }, { value: 'published', label: 'Published (Live)' }, { value: 'archived', label: 'Archived' }] },
         { k: 'title', label: 'Title', required: true }, { k: 'description', label: 'Description', type: 'textarea' },
         { k: 'category_id', label: 'Category', type: 'select', options: cats, half: true }, { k: 'level_id', label: 'Level', type: 'select', options: lvls, half: true },
         { k: 'delivery', label: 'Delivery', type: 'select', half: true, required: true, options: [{ value: 'online', label: 'Online' }, { value: 'face_to_face', label: 'Face to Face' }, { value: 'hybrid', label: 'Hybrid' }] },
         { k: 'units_count', label: 'Units', type: 'number', half: true }, { k: 'duration_weeks', label: 'Duration (weeks)', type: 'number', half: true },
-        { k: 'price', label: 'Price (MYR, 0 = free)', type: 'number', half: true, required: true },
+        { k: 'price', label: 'Price (USD, 0 = free)', type: 'number', half: true, required: true },
       ]}
       toRow={(f) => ({ ...f, category_id: f.category_id ? Number(f.category_id) : null, level_id: f.level_id ? Number(f.level_id) : null, price: Number(f.price ?? 0), units_count: Number(f.units_count ?? 0), duration_weeks: f.duration_weeks ? Number(f.duration_weeks) : null })}
       searchText={(r) => `${r.title} ${r.code}`}

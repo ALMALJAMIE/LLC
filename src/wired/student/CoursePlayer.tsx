@@ -1,3 +1,5 @@
+import PlacementRequired from '../../components/PlacementRequired';
+import { usePlacementDone } from '../../lib/placement';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight, CircleCheck, Circle, Loader2, Lock } from 'lucide-react';
@@ -11,6 +13,7 @@ import { kindIcon, type Lesson } from '../shared/Curriculum';
 type Unit = { id: number; title: string; sort_order: number; summary: string | null; topics: string[] | null; pages: string | null; lessons: Lesson[] };
 
 export default function CoursePlayer() {
+  const placed = usePlacementDone();
   const { id } = useParams();
   const cid = Number(id);
   const user = useAuth((s) => s.user)!;
@@ -37,6 +40,7 @@ export default function CoursePlayer() {
     if (!doneSet.has(lesson.id) && flat[idx + 1]) setCur(flat[idx + 1].id);
   };
 
+  if (placed === false) return <div className="max-w-3xl mx-auto p-6"><PlacementRequired /></div>;
   if (units.loading) return <Spinner />;
   return (
     <div className="w-full bg-[#fafafa] min-h-screen">

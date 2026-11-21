@@ -311,7 +311,7 @@ export function AgentEarnings() {
   const user = useAuth((s) => s.user);
   const { data, loading } = useEarnings();
   const ap = useAgentProfile();
-  const cur = ap.data?.payout_currency ?? 'MYR';
+  const cur = 'USD';
   const e = data ?? [];
   const nav = useNavigate();
   const available = sum(e.filter((x) => x.status === 'approved' && !x.payout_id));
@@ -386,7 +386,7 @@ export function AgentBankDetails() {
   useEffect(() => { if (ap.data) setF(ap.data); }, [ap.data]);
   const save = async (e: React.FormEvent) => {
     e.preventDefault(); setBusy(true);
-    const row = { payout_currency: f.payout_currency ?? 'MYR', paypal_email: f.paypal_email || null, bank_name: f.bank_name || null, bank_account_name: f.bank_account_name || null, bank_account_no: f.bank_account_no || null, swift: f.swift || null, iban: f.iban || null, bank_address: f.bank_address || null };
+    const row = { payout_currency: 'USD', paypal_email: f.paypal_email || null, bank_name: f.bank_name || null, bank_account_name: f.bank_account_name || null, bank_account_no: f.bank_account_no || null, swift: f.swift || null, iban: f.iban || null, bank_address: f.bank_address || null };
     const { error } = ap.data ? await supabase.from('agent_profiles').update(row).eq('id', user.id) : await supabase.from('agent_profiles').insert({ id: user.id, status: 'pending', ...row });
     setBusy(false);
     if (error) toast.err(error.message); else { toast.ok('Payment details saved'); ap.reload(); }
@@ -401,7 +401,7 @@ export function AgentBankDetails() {
       <h1 className="text-3xl font-extrabold text-slate-900">Bank &amp; Payment Details</h1><p className="text-sm text-slate-500 mb-6">Enter your bank account or PayPal details to receive commission payments.</p>
       <form onSubmit={save} className="bg-white rounded-4xl border border-slate-100 shadow-sm p-8 border-t-4 border-t-orange-400 max-w-3xl space-y-8">
         <section><h3 className="font-extrabold text-slate-900 flex items-center gap-2 mb-4"><Globe size={18} className="text-orange-500" /> Payout Currency Preference</h3>
-          <select className={`${inputCls} max-w-xs`} value={f.payout_currency ?? 'MYR'} onChange={(e) => setF({ ...f, payout_currency: e.target.value })}>{['MYR', 'USD', 'SAR', 'AED', 'YER', 'EUR', 'GBP'].map((c) => <option key={c}>{c}</option>)}</select></section>
+          <p className="text-sm text-slate-600">Commissions and payouts are in US dollars (USD). Your bank converts the amount to your local currency when it arrives.</p></section>
         <section><h3 className="font-extrabold text-slate-900 flex items-center gap-2 mb-4"><Mail size={18} className="text-orange-500" /> Online Payout (PayPal)</h3><div className="grid sm:grid-cols-2 gap-4">{inp('paypal_email', 'PayPal Email Address', 'agent@paypal.com')}</div></section>
         <section><h3 className="font-extrabold text-slate-900 flex items-center gap-2 mb-4"><Building2 size={18} className="text-orange-500" /> Direct Bank Transfer Details</h3>
           <div className="grid sm:grid-cols-2 gap-4">{inp('bank_name', 'Bank Name', 'e.g. Maybank')}{inp('bank_account_name', 'Account Name (Beneficiary)', 'Name exactly as it appears on bank')}{inp('bank_account_no', 'Account Number', 'e.g. 1234567890')}{inp('swift', 'SWIFT / BIC Code', 'e.g. MBBEMYKL')}{inp('iban', 'IBAN (Optional)')}{inp('bank_address', 'Bank Branch Address', '', true)}</div></section>

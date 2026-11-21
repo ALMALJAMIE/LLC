@@ -122,7 +122,7 @@ export function AdminEnrollStudent() {
         <Field label="Course"><select required className={inputCls} value={f.course} onChange={(e) => setF({ ...f, course: e.target.value, batch: '' })}><option value="">— Select course —</option>{courses.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</select></Field>
         <Field label="Batch (approves immediately)"><select className={inputCls} value={f.batch} onChange={(e) => setF({ ...f, batch: e.target.value })}><option value="">— Later —</option>{(batches.data ?? []).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></Field>
         <label className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold"><input type="checkbox" className="accent-orange-500 w-4 h-4" checked={f.paid} onChange={(e) => setF({ ...f, paid: e.target.checked })} /> Paid at the center</label>
-        {f.paid && <Field label="Amount (MYR)"><input type="number" className={inputCls} value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} /></Field>}
+        {f.paid && <Field label="Amount (USD)"><input type="number" className={inputCls} value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} /></Field>}
         <button disabled={busy || user?.demo} className={`${btnPrimary} sm:col-span-2`}>{busy ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />} Enroll Student</button>
       </form>
     </Page>

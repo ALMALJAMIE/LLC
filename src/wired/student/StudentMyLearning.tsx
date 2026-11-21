@@ -1,3 +1,5 @@
+import PlacementRequired from '../../components/PlacementRequired';
+import { usePlacementDone } from '../../lib/placement';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Calendar, CircleCheck, CirclePlay, Clock, Globe, MapPin, XCircle } from 'lucide-react';
@@ -17,6 +19,7 @@ const BADGE: Record<string, { cls: string; label: string; icon: typeof BookOpen 
 };
 
 export default function StudentMyLearning() {
+  const placed = usePlacementDone();
   const user = useAuth((s) => s.user);
   const nav = useNavigate();
   const [q, setQ] = useState('');
@@ -31,6 +34,7 @@ export default function StudentMyLearning() {
         <PageHero badge="Student Portal" badgeColor="indigo" title="My Learning" illus="courses" subtitle="Access your enrolled courses, check your schedules, and continue your progress.">
           <SearchInput value={q} onChange={setQ} placeholder="Search your courses..." />
         </PageHero>
+        {placed === false && <div className="mb-6"><PlacementRequired /></div>}
         {loading ? <Spinner /> : list.length === 0 ? (
           <Empty icon={<BookOpen size={28} />} title="No courses yet" text="Browse the catalog and request your first course." action={<button onClick={() => nav('/student/courses')} className={btnAccent}>Browse Courses</button>} />
         ) : (

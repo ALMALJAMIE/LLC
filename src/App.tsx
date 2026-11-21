@@ -1,3 +1,4 @@
+import { DialogHost } from './components/dialogs';
 import { Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, matchPath, useLocation } from 'react-router-dom';
 import { PAGES } from './routes.gen';
@@ -58,6 +59,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />
+      <DialogHost />
     </BrowserRouter>
   );
 }

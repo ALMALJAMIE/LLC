@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Banknote, Check, FileSignature, FileText, Loader2, Paperclip, Percent, Save, X } from 'lucide-react';
@@ -23,7 +24,7 @@ export function AdminAgentApplications() {
   const docs = useData<{ agent_id: string; file_url: string; status: string; id: number; req: { name: string } | null }[]>(() => supabase.from('agent_documents').select('id,agent_id,file_url,status, req:agent_doc_requirements(name)'));
   const list = (data ?? []).filter((a) => tab === 'all' || a.status === tab);
   const decide = async (a: App, status: string) => {
-    const note = status === 'approved' ? '' : prompt('Note to the applicant (optional):') ?? '';
+    const note = status === 'approved' ? '' : await askText('Note to the applicant (optional):') ?? '';
     const { error } = await supabase.from('agent_profiles').update({ status, review_note: note || null }).eq('id', a.id);
     if (error) return toast.err(error.message);
     if (status === 'approved') await supabase.from('agent_documents').update({ status: 'accepted' }).eq('agent_id', a.id).eq('status', 'submitted');
@@ -157,7 +158,7 @@ export function AdminAgentEnrollments() {
     setBusy(null);
   };
   const reject = async (r: Ref) => {
-    const note = prompt('Reason (shown to the agent):'); if (note === null) return;
+    const note = await askText('Reason (shown to the agent):'); if (note === null) return;
     const { error } = await supabase.from('agent_referrals').update({ status: 'rejected', review_note: note || null }).eq('id', r.id);
     if (error) return toast.err(error.message);
     await notify(r.agent_id, 'Student not accepted', `${r.student_name}${note ? ` — ${note}` : ''}`, '/agent/enrollments');

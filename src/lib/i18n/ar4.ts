@@ -187,5 +187,9 @@ const ar4: Record<string, string> = {
   "Content Elements": "عناصر المحتوى",
   "elements": "عناصر",
   "Grammar": "القواعد", "Vocabulary": "المفردات", "Reading": "القراءة", "Listening": "الاستماع", "Writing": "الكتابة", "Speaking": "المحادثة",
+  "One topic per line.": "موضوع في كل سطر.",
+  "e.g. BIG QUESTION 1: Why do we protect animals?": "مثال: BIG QUESTION 1: Why do we protect animals?",
+  "OK": "موافق",
+  "Delete": "حذف",
 };
 export default ar4;

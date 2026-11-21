@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useState, type ReactNode } from 'react';
 import { Loader2, Plus, Search, SquarePen, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -29,7 +30,7 @@ export default function EntityGrid<T extends { id: number | string }>({
   const tone = { orange: 'bg-orange-50 text-orange-600 border-orange-100', indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100', pink: 'bg-pink-50 text-pink-600 border-pink-100', emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100', sky: 'bg-sky-50 text-sky-600 border-sky-100' }[badgeTone];
 
   const del = async (r: T) => {
-    if (!confirm('Delete this item? This cannot be undone.')) return;
+    if (!await askConfirm('Delete this item? This cannot be undone.')) return;
     const { error } = await supabase.from(table).delete().eq('id', r.id);
     if (error) toast.err(error.code === '23503' ? 'It is still used by other records.' : error.message); else { toast.ok('Deleted'); reload(); }
   };

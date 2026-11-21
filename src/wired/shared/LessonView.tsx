@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useState, type ReactNode } from 'react';
 import { CheckCircle2, Clock, Download, ExternalLink, Loader2, XCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -88,7 +89,7 @@ function QuizBlock({ lessonId, quiz, mode, keys: givenKeys }: { lessonId?: numbe
   const keys = res?.keys ?? (mode === 'preview' ? givenKeys : undefined);
   const submit = async () => {
     if (!lessonId) return;
-    if (ans.some((a) => a == null) && !confirm('Some questions are not answered. Submit anyway?')) return;
+    if (ans.some((a) => a == null) && !await askConfirm('Some questions are not answered. Submit anyway?')) return;
     setBusy(true); setErr('');
     const { data, error } = await supabase.rpc('submit_lesson_quiz', { p_lesson: lessonId, p_answers: ans });
     setBusy(false);

@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useState } from 'react';
 import { BookOpen, Calendar, Check, ChevronLeft, ChevronRight, FileText, Filter, Loader2, Search, Trash2, User, X } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
@@ -29,7 +30,7 @@ export default function AdminEnrollments() {
   const list = (data ?? []).filter((e) => (st === 'all' || e.status === st) && `${e.student?.full_name} ${e.student?.email} ${e.student?.student_no} ${e.course?.title}`.toLowerCase().includes(q.toLowerCase()));
   const pages = Math.max(1, Math.ceil(list.length / 9));
   const del = async (e: AdmEnrollment) => {
-    if (!confirm('Delete this enrollment?')) return;
+    if (!await askConfirm('Delete this enrollment?')) return;
     const { error } = await supabase.from('enrollments').delete().eq('id', e.id);
     if (error) toast.err(error.message); else reload();
   };

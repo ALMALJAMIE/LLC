@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useState } from 'react';
 import { Award, Check, EyeOff, Loader2, Search, Star, UserPlus } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
@@ -47,7 +48,7 @@ export function AdminCertificates() {
   const [open, setOpen] = useState(false);
   const { data, loading, reload } = useData<Ce[]>(() => supabase.from('certificates').select('id,serial,title,issued_at, student:profiles(full_name,email)').order('issued_at', { ascending: false }));
   const list = (data ?? []).filter((c) => `${c.student?.full_name} ${c.serial} ${c.title}`.toLowerCase().includes(q.toLowerCase()));
-  const revoke = async (c: Ce) => { if (!confirm(`Revoke ${c.serial}?`)) return; const { error } = await supabase.from('certificates').delete().eq('id', c.id); if (error) toast.err(error.message); else reload(); };
+  const revoke = async (c: Ce) => { if (!await askConfirm(`Revoke ${c.serial}?`)) return; const { error } = await supabase.from('certificates').delete().eq('id', c.id); if (error) toast.err(error.message); else reload(); };
   return (
     <Page>
       {user?.demo && <DemoNotice />}

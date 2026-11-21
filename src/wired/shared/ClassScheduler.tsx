@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useEffect, useMemo, useState } from 'react';
 import QRCode from 'qrcode';
 import { CalendarPlus, Clock, Globe, Loader2, MapPin, QrCode, Trash2, Video } from 'lucide-react';
@@ -28,12 +29,12 @@ export default function ClassScheduler({ title = 'Timetable Management', badge =
   const past = (sessions.data ?? []).length - upcoming.length;
 
   const del = async (s: S) => {
-    if (!confirm(`Delete "${s.title}" on ${fmtDate(s.starts_at)}?`)) return;
+    if (!await askConfirm(`Delete "${s.title}" on ${fmtDate(s.starts_at)}?`)) return;
     const { error } = await supabase.from('class_sessions').delete().eq('id', s.id);
     if (error) toast.err(error.message); else sessions.reload();
   };
   const setLink = async (s: S) => {
-    const url = prompt('Meeting link (Google Meet / Zoom):', s.meeting_url ?? '');
+    const url = await askText('Meeting link (Google Meet / Zoom):', s.meeting_url ?? '');
     if (url === null) return;
     const { error } = await supabase.from('class_sessions').update({ meeting_url: url || null }).eq('id', s.id);
     if (error) toast.err(error.message); else sessions.reload();

@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useState } from 'react';
 import { CalendarDays, Funnel, Loader2, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
@@ -32,7 +33,7 @@ export default function AcademicCalendar() {
   const pages = Math.max(1, Math.ceil(past.length / 12));
 
   const del = async (e: Ev) => {
-    if (!confirm(`Delete "${e.title}"?`)) return;
+    if (!await askConfirm(`Delete "${e.title}"?`)) return;
     const { error } = await supabase.from('calendar_events').delete().eq('id', e.id);
     if (error) toast.err(error.message); else reload();
   };

@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useEffect, useState } from 'react';
 import { Check, Loader2, PenLine, RotateCcw, Save } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
@@ -64,7 +65,7 @@ export function PlacementResults() {
     toast.ok('Level confirmed'); setOpen(null); reload();
   };
   const retake = async (r: R) => {
-    if (!confirm(`Allow ${r.student?.full_name} to retake? Their current attempt will be deleted.`)) return;
+    if (!await askConfirm(`Allow ${r.student?.full_name} to retake? Their current attempt will be deleted.`)) return;
     const { error } = await supabase.from('placement_attempts').delete().eq('id', r.id);
     if (error) toast.err(error.message); else reload();
   };

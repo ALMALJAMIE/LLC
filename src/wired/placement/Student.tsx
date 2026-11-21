@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BrainCircuit, CircleCheck, Clock, Loader2, PlayCircle, Send, Trophy } from 'lucide-react';
@@ -105,7 +106,7 @@ export function PlacementTake() {
   const answered = qs.filter(isAnswered).length;
 
   const submit = useCallback(async (auto = false) => {
-    if (!auto && answered < qs.length && !confirm(`You answered ${answered} of ${qs.length}. Submit anyway?`)) return;
+    if (!auto && answered < qs.length && !await askConfirm(`You answered ${answered} of ${qs.length}. Submit anyway?`)) return;
     setBusy(true);
     const { data, error } = await supabase.rpc('submit_placement', { p_attempt: aid, p_answers: ans });
     setBusy(false);

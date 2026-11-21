@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useState } from 'react';
 import { Check, FileText, Paperclip, X } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
@@ -16,7 +17,7 @@ export default function AbsenceApprovals() {
   const list = (data ?? []).filter((r) => (tab === 'all' || r.status === tab) && (isAcademicLead(user.role) || !r.batch || r.batch.instructor_id === user.id));
   const view = async (p: string) => { const { data } = await supabase.storage.from('uploads').createSignedUrl(p, 300); if (data) window.open(data.signedUrl, '_blank'); };
   const decide = async (r: R, status: 'approved' | 'rejected') => {
-    const note = status === 'rejected' ? prompt('Reason for rejection (shown to the student):') ?? '' : '';
+    const note = status === 'rejected' ? await askText('Reason for rejection (shown to the student):') ?? '' : '';
     const { error } = await supabase.from('absence_requests').update({ status, reviewed_by: user.id, review_note: note || null }).eq('id', r.id);
     if (error) return toast.err(error.message);
     if (status === 'approved' && r.student) {

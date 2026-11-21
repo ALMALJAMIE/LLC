@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Briefcase, Globe, Hash, Heart, ImagePlus, Loader2, Lock, LockOpen, Megaphone, MessageCircle, Send, ShieldCheck, Trash2, Users, Video, X } from 'lucide-react';
@@ -161,7 +162,7 @@ function PostCard({ p, onChange }: { p: Post; onChange: () => void }) {
     const { error } = await supabase.from('community_comments').insert({ post_id: p.id, author_id: user.id, body: c.trim() });
     if (error) toast.err(error.message); else { setC(''); onChange(); }
   };
-  const del = async () => { if (!confirm('Delete this post?')) return; const { error } = await supabase.from('community_posts').delete().eq('id', p.id); if (error) toast.err(error.message); else onChange(); };
+  const del = async () => { if (!await askConfirm('Delete this post?')) return; const { error } = await supabase.from('community_posts').delete().eq('id', p.id); if (error) toast.err(error.message); else onChange(); };
   const comments = useMemo(() => [...p.community_comments].sort((a, b) => a.created_at.localeCompare(b.created_at)), [p.community_comments]);
   return (
     <article className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5">

@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -51,7 +52,7 @@ export function PlacementTestsAdmin() {
     if (error) toast.err(error.message); else { toast.ok(msg); reload(); }
   };
   const del = async (t: Test) => {
-    if (!confirm(`Delete "${t.title}" with all its sections and questions?`)) return;
+    if (!await askConfirm(`Delete "${t.title}" with all its sections and questions?`)) return;
     const { error } = await supabase.from('placement_tests').delete().eq('id', t.id);
     if (error) toast.err(error.code === '23503' ? 'Students have already taken this test. Make it inactive instead.' : error.message); else reload();
   };
@@ -202,13 +203,13 @@ export function TestBuilder() {
     secs.reload();
   };
   const delSec = async (s: Section) => {
-    if (!confirm(`Delete section "${s.title}" and all its questions?`)) return;
+    if (!await askConfirm(`Delete section "${s.title}" and all its questions?`)) return;
     const { error } = await supabase.from('placement_sections').delete().eq('id', s.id); if (error) toast.err(error.message); else { setSel(null); reload(); }
   };
-  const delQ = async (q: Question) => { if (!confirm('Delete this question?')) return; const { error } = await supabase.from('placement_questions').delete().eq('id', q.id); if (error) toast.err(error.message); else qs.reload(); };
+  const delQ = async (q: Question) => { if (!await askConfirm('Delete this question?')) return; const { error } = await supabase.from('placement_questions').delete().eq('id', q.id); if (error) toast.err(error.message); else qs.reload(); };
   const delG = async (g: Group) => {
     const n = curQs.filter((q) => q.group_id === g.id).length;
-    if (!confirm(`Delete this passage group${n ? ` and its ${n} questions` : ''}?`)) return;
+    if (!await askConfirm(`Delete this passage group${n ? ` and its ${n} questions` : ''}?`)) return;
     if (n) await supabase.from('placement_questions').delete().eq('group_id', g.id);
     const { error } = await supabase.from('placement_groups').delete().eq('id', g.id); if (error) toast.err(error.message); else reload();
   };

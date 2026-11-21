@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -100,11 +101,7 @@ export function CurriculumBuilder() {
   const [view, setView] = useState<Lesson | null>(null);
   const cur = sorted.find((u) => u.id === sel) ?? sorted[0];
 
-  const addModule = async () => {
-    const title = prompt('Module name (e.g. BIG QUESTION 1: Why do we protect animals?):'); if (!title?.trim()) return;
-    const { data, error } = await supabase.from('course_units').insert({ course_id: cid, title: title.trim(), sort_order: sorted.length + 1 }).select('id').single();
-    if (error) toast.err(error.message); else { await units.reload(); setSel(data.id); }
-  };
+  const [adding, setAdding] = useState(false);
   const move = async (u: Unit, dir: -1 | 1) => {
     const i = sorted.findIndex((x) => x.id === u.id); const o = sorted[i + dir]; if (!o) return;
     await supabase.from('course_units').update({ sort_order: i + 1 + dir }).eq('id', u.id);
@@ -112,7 +109,7 @@ export function CurriculumBuilder() {
     units.reload();
   };
   const delModule = async (u: Unit) => {
-    if (!confirm(`Delete "${u.title}" and its ${u.lessons.length} content elements?`)) return;
+    if (!await askConfirm(`Delete "${u.title}" and its ${u.lessons.length} content elements?`)) return;
     const { error } = await supabase.from('course_units').delete().eq('id', u.id); if (error) toast.err(error.message); else { setSel(null); units.reload(); }
   };
   const moveEl = async (l: Lesson, dir: -1 | 1) => {
@@ -122,7 +119,7 @@ export function CurriculumBuilder() {
     units.reload();
   };
   const delEl = async (l: Lesson) => {
-    if (!confirm(`Delete "${l.title}"?`)) return;
+    if (!await askConfirm(`Delete "${l.title}"?`)) return;
     const { error } = await supabase.from('lessons').delete().eq('id', l.id); if (error) toast.err(error.message); else units.reload();
   };
 
@@ -151,7 +148,7 @@ export function CurriculumBuilder() {
                   <button onClick={(e) => { e.stopPropagation(); move(u, 1); }} disabled={i === sorted.length - 1} className="p-0.5 text-slate-300 hover:text-slate-600 disabled:opacity-30"><ArrowDown size={14} /></button></div>
               </div>
             ))}</div>
-            {lead && <button onClick={addModule} className="w-full mt-3 py-2.5 rounded-xl border-2 border-dashed border-slate-200 text-sm font-bold text-orange-500 hover:border-orange-300 flex items-center justify-center gap-1"><Plus size={15} />Add Module</button>}
+            {lead && <button onClick={() => setAdding(true)} className="w-full mt-3 py-2.5 rounded-xl border-2 border-dashed border-slate-200 text-sm font-bold text-orange-500 hover:border-orange-300 flex items-center justify-center gap-1"><Plus size={15} />Add Module</button>}
           </aside>
           <main className="lg:col-span-8 xl:col-span-9 space-y-6">
             {!cur ? <div className="bg-white rounded-4xl border-2 border-dashed border-slate-200 py-16 text-center text-slate-400">{lead ? 'No modules yet. Start with “Add Module”.' : 'The academic team has not added modules to this course yet.'}</div> : <>
@@ -183,9 +180,36 @@ export function CurriculumBuilder() {
           </main>
         </div>
       )}
+      {adding && <NewModule courseId={cid} order={sorted.length + 1} onClose={() => setAdding(false)} onDone={async (id) => { setAdding(false); await units.reload(); setSel(id); }} />}
       {edit && <ElementForm el={edit} courseId={cid} onClose={() => setEdit(null)} onDone={() => { setEdit(null); units.reload(); }} />}
       {view && <ElementPreview l={view} onClose={() => setView(null)} />}
     </Page>
+  );
+}
+
+function NewModule({ courseId, order, onClose, onDone }: { courseId: number; order: number; onClose: () => void; onDone: (id: number) => void }) {
+  const [f, setF] = useState({ title: '', pages: '', summary: '', topics: '' });
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
+    if (!f.title.trim()) return toast.err('Module name is required');
+    setBusy(true);
+    const topics = f.topics.split('\n').map((t) => t.trim()).filter(Boolean);
+    const { data, error } = await supabase.from('course_units').insert({ course_id: courseId, title: f.title.trim(), pages: f.pages.trim() || null, summary: f.summary.trim() || null, topics, sort_order: order }).select('id').single();
+    setBusy(false);
+    if (error) toast.err(error.message); else { toast.ok('Module saved'); onDone(data.id); }
+  };
+  return (
+    <Modal open onClose={onClose} title="Add Module" wide>
+      <div className="space-y-4">
+        <div className="grid sm:grid-cols-3 gap-3">
+          <div className="sm:col-span-2"><Field label={`Module Name · ${f.title.length} / 255`}><input autoFocus maxLength={255} className={inputCls} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="e.g. BIG QUESTION 1: Why do we protect animals?" /></Field></div>
+          <Field label="Book units / pages"><input className={inputCls} value={f.pages} onChange={(e) => setF({ ...f, pages: e.target.value })} placeholder="Unit 1 - Unit 2 · 1.02-1.15" /></Field>
+        </div>
+        <Field label="Summary"><textarea rows={3} className={inputCls} value={f.summary} onChange={(e) => setF({ ...f, summary: e.target.value })} placeholder="What students learn in this module." /></Field>
+        <Field label="Syllabus Topics" hint="One topic per line."><textarea rows={3} className={inputCls} value={f.topics} onChange={(e) => setF({ ...f, topics: e.target.value })} placeholder="Present perfect continuous" /></Field>
+        <div className="flex gap-2 justify-end"><button onClick={onClose} className={btnGhost}>Cancel</button><button disabled={busy} onClick={save} className={btnPrimary}>{busy ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save Module</button></div>
+      </div>
+    </Modal>
   );
 }
 

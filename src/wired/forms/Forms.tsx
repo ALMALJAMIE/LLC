@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ArrowDown, ArrowUp, CheckCircle2, ClipboardList, Copy, Download, Eye, Inbox, Loader2, Lock, Plus, SquarePen, Trash2, Unlock } from 'lucide-react';
@@ -29,7 +30,7 @@ export default function FormBuilder() {
   const { data, loading, reload } = useData<Form[]>(() => supabase.from('forms').select('*, responses:form_responses(count)').order('created_at', { ascending: false }));
   const mine = (data ?? []).filter((f) => user?.role === 'admin' || user?.role === 'support' || f.owner_id === user?.id);
   const toggle = async (f: Form) => { const { error } = await supabase.from('forms').update({ is_open: !f.is_open }).eq('id', f.id); if (error) toast.err(error.message); else reload(); };
-  const del = async (f: Form) => { if (!confirm(`Delete “${f.title}” and all its responses?`)) return; const { error } = await supabase.from('forms').delete().eq('id', f.id); if (error) toast.err(error.message); else { toast.ok('Deleted'); reload(); } };
+  const del = async (f: Form) => { if (!await askConfirm(`Delete “${f.title}” and all its responses?`)) return; const { error } = await supabase.from('forms').delete().eq('id', f.id); if (error) toast.err(error.message); else { toast.ok('Deleted'); reload(); } };
   const copy = (f: Form) => { navigator.clipboard?.writeText(formUrl(f.id)); toast.ok('Link copied'); };
   return (
     <Page>
@@ -128,7 +129,7 @@ function Responses({ form, onClose }: { form: Form; onClose: () => void }) {
     const blob = new Blob(['﻿' + rows.map((r) => r.map(esc).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${form.title.replace(/[^\w]+/g, '-')}-responses.csv`; a.click();
   };
-  const del = async (r: Resp) => { if (!confirm('Delete this response?')) return; const { error } = await supabase.from('form_responses').delete().eq('id', r.id); if (error) toast.err(error.message); else reload(); };
+  const del = async (r: Resp) => { if (!await askConfirm('Delete this response?')) return; const { error } = await supabase.from('form_responses').delete().eq('id', r.id); if (error) toast.err(error.message); else reload(); };
   return (
     <Modal open onClose={onClose} title={`Responses — ${form.title}`} wide>
       {loading ? <Spinner /> : !data?.length ? <p className="text-center text-slate-400 py-10">No responses yet. Share the link: <br /><code className="text-xs text-slate-600">{formUrl(form.id)}</code></p> : (<>

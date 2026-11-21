@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useState } from 'react';
 import { Check, Eye, X } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
@@ -17,7 +18,7 @@ export default function LessonApprovals() {
   const { data, loading, reload } = useData<L[]>(() => supabase.from('lessons').select('*, unit:course_units(title, course:courses(title)), author:profiles!lessons_created_by_fkey(full_name)').order('submitted_at', { ascending: false, nullsFirst: false }));
   const list = (data ?? []).filter((l) => tab === 'all' || l.status === tab);
   const decide = async (l: L, status: 'approved' | 'rejected') => {
-    const note = status === 'rejected' ? prompt('What should the instructor fix?') : '';
+    const note = status === 'rejected' ? await askText('What should the instructor fix?') : '';
     if (note === null) return;
     const { error } = await supabase.from('lessons').update({ status, review_note: note || null }).eq('id', l.id);
     if (error) return toast.err(error.message);

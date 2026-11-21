@@ -1,3 +1,4 @@
+import { askConfirm, askText } from '../../components/dialogs';
 import { useEffect, useMemo, useState } from 'react';
 import QRCode from 'qrcode';
 import { Check, ChevronDown, ChevronUp, Clock, Globe, Loader2, Mail, MapPin, MessageCircle, Plus, QrCode, Send, Trash2, Users, Video } from 'lucide-react';
@@ -198,7 +199,7 @@ export function InstructorExams() {
   const ids = (batches.data ?? []).map((b) => b.id);
   const { data, loading, reload } = useData<Exam[]>(() => supabase.from('exams').select('*, batch:batches(name)').in('batch_id', ids.length ? ids : [0]).order('starts_at', { ascending: false }), [ids.join(',')]);
   const [edit, setEdit] = useState<Partial<Exam> | null>(null);
-  const del = async (x: Exam) => { if (!confirm(`Delete "${x.title}" and its results?`)) return; const { error } = await supabase.from('exams').delete().eq('id', x.id); if (error) toast.err(error.message); else reload(); };
+  const del = async (x: Exam) => { if (!await askConfirm(`Delete "${x.title}" and its results?`)) return; const { error } = await supabase.from('exams').delete().eq('id', x.id); if (error) toast.err(error.message); else reload(); };
   return (
     <Page>
       {user?.demo && <DemoNotice />}

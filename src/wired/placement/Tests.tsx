@@ -12,6 +12,7 @@ import { fmtDate, useData } from '../../lib/db';
 import { uploadMedia } from '../../lib/media';
 import { DemoNotice, Field, Modal, Page, PageHero, SearchInput, Spinner, StatusPill, btnGhost, btnPrimary, inputCls, toast } from '../../components/ui';
 import { RichText } from '../shared/LessonView';
+import { parseQuiz } from '../../lib/questions';
 
 // ---------------------------------------------------------------- types
 export type Test = {
@@ -189,6 +190,7 @@ export function TestBuilder() {
   const [qForm, setQForm] = useState<Partial<Question> | null>(null);
   const [gForm, setGForm] = useState<Partial<Group> | null>(null);
   const [instr, setInstr] = useState<string | null>(null);
+  const [imp, setImp] = useState(false);
   const list = secs.data ?? [];
   const cur = list.find((s) => s.id === sel) ?? list[0];
   const curGroups = (groups.data ?? []).filter((g) => g.section_id === cur?.id);
@@ -261,6 +263,7 @@ export function TestBuilder() {
                 <button onClick={() => setInstr('')} className={btnGhost}><Info size={15} /> Add Instruction</button>
                 <button onClick={() => newQ(null)} className={btnGhost}><Plus size={15} /> Add Standalone Question</button>
                 <button onClick={() => setGForm({ section_id: cur.id, sort_order: curGroups.length + 1 })} className={btnGhost}><BookOpenText size={15} /> Add Passage Group</button>
+                <button onClick={() => setImp(true)} className={btnGhost}><FileText size={15} /> Import from text</button>
               </div>
 
               {cur.instructions.length > 0 && <Block title="Instructions Group" count={cur.instructions.length}>
@@ -297,6 +300,7 @@ export function TestBuilder() {
       {secForm && <SectionForm s={secForm} onClose={() => setSecForm(null)} onDone={(sid) => { setSecForm(null); setSel(sid); secs.reload(); }} />}
       {qForm && <QuestionForm q={qForm} onClose={() => setQForm(null)} onDone={() => { setQForm(null); qs.reload(); }} />}
       {gForm && <GroupForm g={gForm} testId={tid} onClose={() => setGForm(null)} onDone={() => { setGForm(null); groups.reload(); }} />}
+      {imp && cur && <ImportQuestions section={cur} startOrder={curQs.length} groupOrder={curGroups.length} onClose={() => setImp(false)} onDone={() => { setImp(false); reload(); }} />}
       {instr !== null && cur && (
         <Modal open onClose={() => setInstr(null)} title="Add Instruction">
           <Field label="Instruction" hint="One instruction per line; each line becomes a separate item."><textarea rows={4} className={inputCls} value={instr} onChange={(e) => setInstr(e.target.value)} placeholder="Choose the ONE correct option (A, B, C or D) for each question." /></Field>
@@ -449,6 +453,47 @@ function QuestionForm({ q, onClose, onDone }: { q: Partial<Question>; onClose: (
           </Field>
         ) : <p className="text-xs text-slate-500 p-3 rounded-xl bg-amber-50 border border-amber-100">Students type their answer. Staff mark it under “Placement Results” (0 to {f.points || 1} points).</p>}
         <div className="flex gap-2 justify-end"><button onClick={onClose} className={btnGhost}>Cancel</button><button disabled={busy} onClick={save} className={btnPrimary}>{busy ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save Question</button></div>
+      </div>
+    </Modal>
+  );
+}
+
+function ImportQuestions({ section, startOrder, groupOrder, onClose, onDone }: { section: Section; startOrder: number; groupOrder: number; onClose: () => void; onDone: () => void }) {
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const p = useMemo(() => parseQuiz(text), [text]);
+  const unsupported = p.quiz.filter((q) => q.type !== 'single' && q.type !== 'short').length;
+  const save = async () => {
+    if (!p.quiz.length) return toast.err('Add at least one question.');
+    if (p.errors.length) return toast.err(p.errors[0]);
+    if (unsupported) return toast.err('Placement tests accept [single] and [short] questions only.');
+    setBusy(true);
+    const groups = new Map<string, number>();
+    let go = groupOrder;
+    for (const q of p.quiz) {
+      if (q.passage && !groups.has(q.passage)) {
+        const { data, error } = await supabase.from('placement_groups').insert({ section_id: section.id, passage: q.passage, sort_order: ++go }).select('id').single();
+        if (error) { setBusy(false); return toast.err(error.message); }
+        groups.set(q.passage, data.id);
+      }
+    }
+    const rows = p.quiz.map((q, i) => ({
+      test_id: section.test_id, section_id: section.id, section: section.skill, group_id: q.passage ? groups.get(q.passage)! : null, prompt: q.prompt,
+      qtype: q.type === 'single' ? 'mcq' : 'short', options: q.type === 'single' ? q.options : [], correct_index: q.type === 'single' ? (p.keys[i] as number) : 0, points: 1, sort_order: startOrder + i + 1,
+    }));
+    const { error } = await supabase.from('placement_questions').insert(rows);
+    setBusy(false);
+    if (error) toast.err(error.message); else { toast.ok(`${rows.length} questions added`); onDone(); }
+  };
+  return (
+    <Modal open onClose={onClose} title={`Import questions · ${section.title}`} wide>
+      <div className="space-y-3">
+        <p className="text-xs text-slate-600">Paste many questions at once. One block per question, an empty line between blocks. <b>[single]</b> questions are marked automatically; <b>[short]</b> questions are typed answers that staff mark. Lines starting with <b>&gt;</b> add a reading passage shared by the questions under it.</p>
+        <pre className="bg-slate-50 rounded-xl p-3 text-[12px] font-mono overflow-x-auto" data-no-i18n>{'> Maria moved to Kuala Lumpur last year to study.\n[single] Why did Maria move?\n* To study\n- To work\n- To visit friends\n\n[short] Write one sentence about your city.\n= -'}</pre>
+        <textarea rows={14} className={`${inputCls} font-mono text-[13px]`} value={text} onChange={(e) => setText(e.target.value)} data-no-i18n />
+        {(p.errors.length > 0 || unsupported > 0) && <ul className="p-3 rounded-xl bg-red-50 border border-red-100 text-xs text-red-700 list-disc pl-6">{p.errors.map((e, i) => <li key={i}>{e}</li>)}{unsupported > 0 && <li>Placement tests accept [single] and [short] questions only.</li>}</ul>}
+        {!p.errors.length && !unsupported && p.quiz.length > 0 && <p className="text-xs font-semibold text-emerald-700">{p.quiz.length} questions ready.</p>}
+        <div className="flex gap-2 justify-end"><button onClick={onClose} className={btnGhost}>Cancel</button><button disabled={busy} onClick={save} className={btnPrimary}>{busy ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Add Questions</button></div>
       </div>
     </Modal>
   );

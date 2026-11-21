@@ -9,6 +9,8 @@ import { useData } from '../../lib/db';
 import { Spinner, toast } from '../../components/ui';
 import { LessonView } from '../shared/LessonView';
 import { kindIcon, type Lesson } from '../shared/Curriculum';
+import { BookmarkButton, LessonExtras } from './LessonExtras';
+import { Bookmark } from 'lucide-react';
 
 type Unit = { id: number; title: string; sort_order: number; summary: string | null; topics: string[] | null; pages: string | null; lessons: Lesson[] };
 
@@ -21,6 +23,9 @@ export default function CoursePlayer() {
   const course = useData<{ title: string; code: string }>(() => supabase.from('courses').select('title,code').eq('id', cid).maybeSingle(), [cid]);
   const units = useData<Unit[]>(() => supabase.from('course_units').select('id,title,sort_order,summary,topics,pages, lessons(*)').eq('course_id', cid).order('sort_order').order('id'), [cid]);
   const done = useData<{ lesson_id: number }[]>(() => supabase.from('lesson_progress').select('lesson_id').eq('student_id', user.id));
+  const marks = useData<{ lesson_id: number }[]>(() => supabase.from('lesson_notes').select('lesson_id').eq('student_id', user.id).eq('bookmarked', true));
+  const [bm, setBm] = useState<Set<number> | null>(null);
+  const bookmarks = bm ?? new Set((marks.data ?? []).map((m) => m.lesson_id));
   const flat = useMemo(() => (units.data ?? []).flatMap((u) => [...u.lessons].filter((l) => l.status === 'approved').sort((a, b) => a.sort_order - b.sort_order || a.id - b.id).map((l) => ({ ...l, unitTitle: u.title, unit: u }))), [units.data]);
   const [cur, setCur] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -63,7 +68,7 @@ export default function CoursePlayer() {
                   {ls.map((l) => (
                     <button key={l.id} onClick={() => setCur(l.id)} className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-sm transition-colors ${l.id === cur ? 'bg-orange-50 text-orange-700 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}>
                       {doneSet.has(l.id) ? <CircleCheck size={16} className="text-emerald-500 shrink-0" /> : <Circle size={16} className="text-slate-300 shrink-0" />}
-                      <span className="flex-1 truncate">{l.title}</span>{(() => { const I = kindIcon(l.kind ?? 'text'); return l.kind && l.kind !== 'text' ? <I size={13} className="text-slate-300" /> : null; })()}
+                      <span className="flex-1 truncate">{l.title}</span>{bookmarks.has(l.id) && <Bookmark size={12} className="text-amber-500" fill="currentColor" />}{(() => { const I = kindIcon(l.kind ?? 'text'); return l.kind && l.kind !== 'text' ? <I size={13} className="text-slate-300" /> : null; })()}
                     </button>
                   ))}
                 </div>
@@ -73,7 +78,8 @@ export default function CoursePlayer() {
           <main className="lg:col-span-8 xl:col-span-9 bg-white rounded-4xl border border-slate-100 shadow-sm p-6 sm:p-10">
             {lesson && <>
               <p className="text-[11px] font-black uppercase tracking-wider text-indigo-600 mb-1">{lesson.unitTitle}</p>
-              <h2 className="text-3xl font-extrabold text-slate-900 mb-4">{lesson.title}</h2>
+              <div className="flex items-start gap-3 mb-4"><h2 className="flex-1 text-3xl font-extrabold text-slate-900">{lesson.title}</h2>
+                <BookmarkButton lessonId={lesson.id} on={bookmarks.has(lesson.id)} onChange={(v) => { const n = new Set(bookmarks); if (v) n.add(lesson.id); else n.delete(lesson.id); setBm(n); }} /></div>
               {flat[idx - 1]?.unit_id !== lesson.unit_id && (lesson.unit.summary || !!lesson.unit.topics?.length) && (
                 <div className="mb-6 p-4 rounded-2xl bg-slate-50 border border-slate-100 text-sm text-slate-600">
                   {lesson.unit.summary && <p>{lesson.unit.summary}</p>}
@@ -81,6 +87,7 @@ export default function CoursePlayer() {
                 </div>
               )}
               <LessonView key={lesson.id} lesson={lesson} quizMode="take" />
+              <LessonExtras lessonId={lesson.id} />
               <div className="flex flex-wrap items-center gap-3 mt-10 pt-6 border-t border-slate-100">
                 <button disabled={idx <= 0} onClick={() => setCur(flat[idx - 1].id)} className="flex items-center gap-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 disabled:opacity-40"><ChevronLeft size={16} />Previous</button>
                 <button disabled={busy} onClick={toggle} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold ${doneSet.has(lesson.id) ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'}`}>

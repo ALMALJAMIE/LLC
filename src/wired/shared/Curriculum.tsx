@@ -1,9 +1,10 @@
+import { notify } from '../admin/AdminEnrollments';
 import { askConfirm, askText } from '../../components/dialogs';
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowDown, ArrowLeft, ArrowUp, BookOpen, ClipboardList, Eye, FileAudio, FileImage, FileQuestion, FileSpreadsheet, FileText, FileType2, FileVideo,
-  Layers, Loader2, Plus, Presentation, Save, Send, SquarePen, Trash2, Upload, X,
+  Languages, Layers, Loader2, MessageCircleQuestion, Mic, PenLine, Plus, Presentation, Save, Send, SquarePen, Trash2, Upload, X,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { isAcademicLead } from '../../lib/nav';
@@ -11,11 +12,12 @@ import { supabase } from '../../lib/supabase';
 import { fmtDateTime, useData } from '../../lib/db';
 import { uploadMedia } from '../../lib/media';
 import { DemoNotice, Field, Modal, Page, PageHero, SearchInput, Spinner, StatusPill, btnGhost, btnPrimary, inputCls, toast } from '../../components/ui';
-import { LessonView, type LessonKind, type QuizQ } from './LessonView';
+import { LessonView, type LessonData, type LessonKind, type QuizQ } from './LessonView';
+import { parseQuiz, quizToText, QTYPES, QUIZ_HELP, type QuizKey } from '../../lib/questions';
 
 export type Lesson = {
   id: number; unit_id: number; title: string; content: string | null; video_url: string | null; resource_url: string | null; duration_min: number | null;
-  sort_order: number; status: string; review_note: string | null; created_by: string | null; kind: LessonKind; file_url: string | null; quiz: QuizQ[];
+  sort_order: number; status: string; review_note: string | null; created_by: string | null; kind: LessonKind; file_url: string | null; quiz: QuizQ[]; data?: LessonData | null;
 };
 export type Unit = { id: number; course_id: number; title: string; sort_order: number; summary: string | null; topics: string[]; pages: string | null; lessons: Lesson[] };
 type Course = { id: number; title: string; code: string; course_units: { count: number }[] };
@@ -27,6 +29,7 @@ export const KINDS: { k: LessonKind; label: string; icon: typeof FileText; accep
   { k: 'pptx', label: 'PPTX', icon: Presentation, accept: '.ppt,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation' },
   { k: 'docx', label: 'DOCX', icon: FileSpreadsheet, accept: '.doc,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
   { k: 'quiz', label: 'Quiz', icon: FileQuestion },
+  { k: 'vocabulary', label: 'Vocabulary', icon: Languages }, { k: 'writing', label: 'Writing', icon: PenLine }, { k: 'speaking', label: 'Speaking', icon: Mic },
 ];
 export const kindIcon = (k: LessonKind) => KINDS.find((x) => x.k === k)?.icon ?? FileText;
 const root = (role: string) => (isAcademicLead(role as never) ? '/admin-curriculum' : '/instructor/lessons');
@@ -96,7 +99,7 @@ export function CurriculumBuilder() {
   const nav = useNavigate();
   const { course, units, sorted } = useCourseContent(cid);
   const [sel, setSel] = useState<number | null>(null);
-  const [tab, setTab] = useState<'content' | 'reports'>('content');
+  const [tab, setTab] = useState<'content' | 'reports' | 'work' | 'questions'>('content');
   const [edit, setEdit] = useState<Partial<Lesson> | null>(null);
   const [view, setView] = useState<Lesson | null>(null);
   const cur = sorted.find((u) => u.id === sel) ?? sorted[0];
@@ -130,13 +133,14 @@ export function CurriculumBuilder() {
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <button onClick={() => nav(root(user.role))} className="w-10 h-10 rounded-full bg-white border border-slate-200 grid place-items-center"><ArrowLeft size={18} /></button>
         <div className="flex-1 min-w-48"><p className="text-[10px] font-black uppercase text-orange-500">Editing Mode</p><h1 className="text-2xl font-extrabold text-slate-900">{course.data?.title} <span className="text-sm font-mono text-slate-400">{course.data?.code}</span></h1></div>
-        <div className="inline-flex bg-slate-50 p-1 rounded-xl border border-slate-200">
-          <button onClick={() => setTab('content')} className={`px-4 py-2 rounded-lg text-xs font-bold ${tab === 'content' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>Module & Content Editing</button>
-          <button onClick={() => setTab('reports')} className={`px-4 py-2 rounded-lg text-xs font-bold ${tab === 'reports' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>Quiz Reports</button>
+        <div className="inline-flex flex-wrap bg-slate-50 p-1 rounded-xl border border-slate-200">
+          {([['content', 'Module & Content Editing'], ['work', 'Student Work'], ['questions', 'Student Questions'], ['reports', 'Quiz Reports']] as const).map(([k, l]) => (
+            <button key={k} onClick={() => setTab(k)} className={`px-4 py-2 rounded-lg text-xs font-bold ${tab === k ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>{l}</button>
+          ))}
         </div>
         <button onClick={() => nav(`${root(user.role)}/${cid}/view`)} className={btnGhost}><Eye size={16} /> Preview</button>
       </div>
-      {tab === 'reports' ? <QuizReports cid={cid} /> : (
+      {tab === 'reports' ? <QuizReports cid={cid} /> : tab === 'work' ? <StudentWorkReview cid={cid} /> : tab === 'questions' ? <StudentQuestions cid={cid} /> : (
         <div className="grid lg:grid-cols-12 gap-6">
           <aside className="lg:col-span-4 xl:col-span-3 bg-white rounded-3xl border border-slate-100 shadow-sm p-4 h-fit">
             <p className="text-[11px] font-black uppercase tracking-wider text-slate-500 px-1 mb-3">Content Modules ({sorted.length})</p>
@@ -249,29 +253,32 @@ function ModuleIdentity({ unit, canEdit, onSaved, onDelete }: { unit: Unit; canE
 }
 
 function ElementPreview({ l, onClose }: { l: Lesson; onClose: () => void }) {
-  const keys = useData<{ keys: number[] }>(() => supabase.from('lesson_quiz_keys').select('keys').eq('lesson_id', l.id).maybeSingle(), [l.id]);
-  return <Modal open onClose={onClose} title={l.title} wide><LessonView lesson={l} quizKeys={keys.data?.keys} /></Modal>;
+  const keys = useData<{ keys: QuizKey[]; explanations: (string | null)[] }>(() => supabase.from('lesson_quiz_keys').select('keys, explanations').eq('lesson_id', l.id).maybeSingle(), [l.id]);
+  return <Modal open onClose={onClose} title={l.title} wide><LessonView lesson={l} quizKeys={keys.data?.keys} quizExplanations={keys.data?.explanations} /></Modal>;
 }
 
-type QEdit = { prompt: string; options: string[]; correct: number };
 function ElementForm({ el, courseId, onClose, onDone }: { el: Partial<Lesson>; courseId: number; onClose: () => void; onDone: () => void }) {
   const user = useAuth((s) => s.user)!;
   const lead = isAcademicLead(user.role);
   const kind = el.kind ?? 'text';
   const meta = KINDS.find((x) => x.k === kind)!;
-  const [f, setF] = useState({ title: el.title ?? '', content: el.content ?? '', video_url: el.video_url ?? '', file_url: el.file_url ?? '', resource_url: el.resource_url ?? '', duration_min: el.duration_min ? String(el.duration_min) : '' });
-  const [quiz, setQuiz] = useState<QEdit[]>(() => (el.quiz ?? []).map((q) => ({ ...q, correct: 0 })));
+  const d = el.data ?? {};
+  const [f, setF] = useState({ title: el.title ?? '', content: el.content ?? '', video_url: el.video_url ?? '', file_url: el.file_url ?? '', resource_url: el.resource_url ?? '', duration_min: el.duration_min ? String(el.duration_min) : '',
+    transcript: d.transcript ?? '', min_words: d.min_words ? String(d.min_words) : '', vocab: (d.vocab ?? []).map((v) => [v.term, v.definition, v.example ?? ''].filter((x, i) => i < 2 || x).join(' | ')).join('\n') });
+  const [script, setScript] = useState('');
   const [keysLoaded, setKeysLoaded] = useState(!el.id || kind !== 'quiz');
   const [busy, setBusy] = useState(false);
   const [up, setUp] = useState(false);
   const [preview, setPreview] = useState(false);
+  const [help, setHelp] = useState(!el.id);
   if (!keysLoaded) {
-    supabase.from('lesson_quiz_keys').select('keys').eq('lesson_id', el.id!).maybeSingle().then(({ data }) => {
-      const k = (data?.keys as number[] | undefined) ?? [];
-      setQuiz((qs) => qs.map((q, i) => ({ ...q, correct: k[i] ?? 0 })));
+    supabase.from('lesson_quiz_keys').select('keys, explanations').eq('lesson_id', el.id!).maybeSingle().then(({ data }) => {
+      setScript(quizToText(el.quiz ?? [], (data?.keys as QuizKey[] | undefined) ?? [], (data?.explanations as (string | null)[] | undefined) ?? []));
       setKeysLoaded(true);
     });
   }
+  const parsed = useMemo(() => (kind === 'quiz' ? parseQuiz(script) : null), [script, kind]);
+  const vocab = f.vocab.split('\n').map((l) => l.split('|').map((x) => x.trim())).filter((p) => p[0]).map(([term, definition, example]) => ({ term, definition: definition ?? '', ...(example ? { example } : {}) }));
   const upload = async (file?: File) => {
     if (!file) return;
     if (file.size > 50 * 1024 * 1024) return toast.err('The file is larger than 50 MB.');
@@ -280,47 +287,50 @@ function ElementForm({ el, courseId, onClose, onDone }: { el: Partial<Lesson>; c
     setUp(false);
     if (r.error) toast.err(r.error); else { setF((p) => ({ ...p, file_url: r.url! })); toast.ok('File uploaded'); }
   };
+  const data = (): LessonData => {
+    const o: LessonData = {};
+    if ((kind === 'audio' || kind === 'video') && f.transcript.trim()) o.transcript = f.transcript.trim();
+    if (kind === 'writing' && Number(f.min_words) > 0) o.min_words = Number(f.min_words);
+    if (kind === 'vocabulary') o.vocab = vocab;
+    return o;
+  };
   const save = async (status: string) => {
     if (!f.title.trim()) return toast.err('Title is required');
     if (kind === 'text' && !f.content.trim()) return toast.err('Write the text.');
     if (kind === 'video' && !f.video_url.trim() && !f.file_url) return toast.err('Add a video link or upload a video.');
     if (['image', 'audio', 'pdf', 'pptx', 'docx'].includes(kind) && !f.file_url) return toast.err('Upload the file or paste its link.');
-    const qClean = quiz.map((q) => ({ ...q, prompt: q.prompt.trim(), options: q.options.map((o) => o.trim()) }));
+    if ((kind === 'writing' || kind === 'speaking') && !f.content.trim()) return toast.err('Write the task for the students.');
+    if (kind === 'vocabulary' && !vocab.length) return toast.err('Add at least one word.');
+    if (kind === 'vocabulary' && vocab.some((v) => !v.definition)) return toast.err('Every word needs a meaning: word | meaning | example.');
     if (kind === 'quiz') {
-      if (!qClean.length) return toast.err('Add at least one question.');
-      for (const [i, q] of qClean.entries()) {
-        const opts = q.options.filter(Boolean);
-        if (!q.prompt || opts.length < 2) return toast.err(`Question ${i + 1}: write the question and at least two options.`);
-        if (!q.options[q.correct]) return toast.err(`Question ${i + 1}: choose the correct option.`);
-      }
+      if (!parsed?.quiz.length) return toast.err('Add at least one question.');
+      if (parsed.errors.length) return toast.err(parsed.errors[0]);
     }
     setBusy(true);
-    // drop empty options while keeping the correct index pointing at the same option
-    const quizRows = qClean.map((q) => { const kept = q.options.map((o, i) => ({ o, i })).filter((x) => x.o); return { prompt: q.prompt, options: kept.map((x) => x.o), correct: kept.findIndex((x) => x.i === q.correct) }; });
     const row = {
       unit_id: el.unit_id, title: f.title.trim(), kind, content: f.content.trim() || null, video_url: kind === 'video' ? f.video_url.trim() || null : null,
-      file_url: kind === 'text' || kind === 'quiz' ? null : f.file_url || null, resource_url: f.resource_url.trim() || null, duration_min: f.duration_min ? Number(f.duration_min) : null,
-      quiz: kind === 'quiz' ? quizRows.map(({ prompt, options }) => ({ prompt, options })) : [], status, sort_order: el.sort_order ?? 1, ...(el.id ? {} : { created_by: user.id }),
+      file_url: ['text', 'quiz', 'vocabulary', 'writing', 'speaking'].includes(kind) ? null : f.file_url || null, resource_url: f.resource_url.trim() || null,
+      duration_min: f.duration_min ? Number(f.duration_min) : null, quiz: kind === 'quiz' ? parsed!.quiz : [], data: data(), status, sort_order: el.sort_order ?? 1, ...(el.id ? {} : { created_by: user.id }),
     };
     const r = el.id ? await supabase.from('lessons').update(row).eq('id', el.id).select('id').single() : await supabase.from('lessons').insert(row).select('id').single();
     if (!r.error && kind === 'quiz') {
-      const k = await supabase.from('lesson_quiz_keys').upsert({ lesson_id: r.data.id, keys: quizRows.map((q) => q.correct) });
+      const k = await supabase.from('lesson_quiz_keys').upsert({ lesson_id: r.data.id, keys: parsed!.keys, explanations: parsed!.explanations });
       if (k.error) { setBusy(false); return toast.err(k.error.message); }
     }
     setBusy(false);
     if (r.error) toast.err(r.error.message); else { toast.ok(status === 'approved' ? 'Published' : status === 'pending' ? 'Sent for approval' : 'Draft saved'); onDone(); }
   };
-  const draft = { ...el, ...f, kind, duration_min: f.duration_min ? Number(f.duration_min) : null, quiz: quiz.map(({ prompt, options }) => ({ prompt, options })) } as Lesson;
+  const draft = { ...el, ...f, kind, duration_min: f.duration_min ? Number(f.duration_min) : null, quiz: parsed?.quiz ?? [], data: data() } as unknown as Lesson;
   return (
     <Modal open onClose={onClose} title={`${el.id ? 'Edit' : 'Add'} ${meta.label}${kind === 'quiz' ? '' : ' element'}`} wide>
-      {preview ? <><LessonView lesson={draft} quizKeys={quiz.map((q) => q.correct)} /><button onClick={() => setPreview(false)} className={`${btnGhost} w-full mt-5`}>Back to editing</button></> : (
+      {preview ? <><LessonView lesson={draft} quizKeys={parsed?.keys} quizExplanations={parsed?.explanations} /><button onClick={() => setPreview(false)} className={`${btnGhost} w-full mt-5`}>Back to editing</button></> : (
         <div className="space-y-4">
           <div className="grid sm:grid-cols-4 gap-3">
             <div className="sm:col-span-3"><Field label="Title"><input className={inputCls} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder={kind === 'quiz' ? 'e.g. Unit 1 vocabulary quiz' : 'e.g. Why do we protect animals?'} /></Field></div>
             <Field label="Duration (min)"><input type="number" className={inputCls} value={f.duration_min} onChange={(e) => setF({ ...f, duration_min: e.target.value })} /></Field>
           </div>
           {kind === 'video' && <Field label="Video link (YouTube / Vimeo / Google Drive)"><input className={inputCls} value={f.video_url} onChange={(e) => setF({ ...f, video_url: e.target.value })} placeholder="https://youtu.be/..." /></Field>}
-          {kind !== 'text' && kind !== 'quiz' && (
+          {['video', 'image', 'audio', 'pdf', 'pptx', 'docx'].includes(kind) && (
             <Field label={kind === 'video' ? 'Or upload a video file' : `${meta.label} file`} hint="Up to 50 MB. Uploaded files get a public link that only people with the link can find.">
               <div className="flex gap-2">
                 <input className={inputCls} value={f.file_url} onChange={(e) => setF({ ...f, file_url: e.target.value })} placeholder="Paste a link or upload →" />
@@ -328,25 +338,27 @@ function ElementForm({ el, courseId, onClose, onDone }: { el: Partial<Lesson>; c
               </div>
             </Field>
           )}
-          <Field label={kind === 'text' ? 'Text' : 'Description / instructions (optional)'} hint="Use # for headings, - for bullet points, **bold**.">
-            <textarea rows={kind === 'text' ? 12 : 3} className={`${inputCls} ${kind === 'text' ? 'font-mono text-[13px]' : ''}`} value={f.content} onChange={(e) => setF({ ...f, content: e.target.value })} />
+          <Field label={kind === 'text' ? 'Text' : kind === 'writing' || kind === 'speaking' ? 'Task for the students' : 'Description / instructions (optional)'} hint="Use # for headings, - for bullet points, **bold**.">
+            <textarea rows={kind === 'text' ? 12 : 3} className={`${inputCls} ${kind === 'text' ? 'font-mono text-[13px]' : ''}`} value={f.content} onChange={(e) => setF({ ...f, content: e.target.value })}
+              placeholder={kind === 'writing' ? 'e.g. Write an email to a friend about your weekend.' : kind === 'speaking' ? 'e.g. Talk for one minute about your favourite place in your city.' : ''} />
           </Field>
+          {(kind === 'audio' || kind === 'video') && <Field label="Transcript (optional)" hint="Students can open it under the player."><textarea rows={4} className={inputCls} value={f.transcript} onChange={(e) => setF({ ...f, transcript: e.target.value })} /></Field>}
+          {kind === 'writing' && <Field label="Minimum words (optional)"><input type="number" className={`${inputCls} max-w-40`} value={f.min_words} onChange={(e) => setF({ ...f, min_words: e.target.value })} placeholder="80" /></Field>}
+          {kind === 'vocabulary' && <Field label={`Words · ${vocab.length}`} hint="One word per line:  word | meaning | example (the example is optional).">
+            <textarea rows={10} className={`${inputCls} font-mono text-[13px]`} value={f.vocab} onChange={(e) => setF({ ...f, vocab: e.target.value })} placeholder={'endangered | at risk of disappearing | The tiger is an endangered animal.\nhabitat | the natural home of an animal'} /></Field>}
           {kind === 'quiz' && (!keysLoaded ? <Spinner /> : (
-            <div className="space-y-3">
-              {quiz.map((q, i) => (
-                <div key={i} className="p-4 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex gap-2 items-center"><span className="font-black text-slate-400">{i + 1}.</span><input className={inputCls} value={q.prompt} onChange={(e) => setQuiz(quiz.map((x, j) => (j === i ? { ...x, prompt: e.target.value } : x)))} placeholder="Question" />
-                    <button type="button" onClick={() => setQuiz(quiz.filter((_, j) => j !== i))} className="p-1.5 text-slate-400 hover:text-red-500"><Trash2 size={15} /></button></div>
-                  {q.options.map((o, oi) => (
-                    <div key={oi} className="flex items-center gap-2 pl-6"><input type="radio" checked={q.correct === oi} onChange={() => setQuiz(quiz.map((x, j) => (j === i ? { ...x, correct: oi } : x)))} className="accent-emerald-600 w-4 h-4" />
-                      <span className="font-black text-slate-400 w-4">{String.fromCharCode(65 + oi)}</span>
-                      <input className={inputCls} value={o} onChange={(e) => setQuiz(quiz.map((x, j) => (j === i ? { ...x, options: x.options.map((y, k) => (k === oi ? e.target.value : y)) } : x)))} /></div>
-                  ))}
-                  {q.options.length < 6 && <button type="button" onClick={() => setQuiz(quiz.map((x, j) => (j === i ? { ...x, options: [...x.options, ''] } : x)))} className="pl-6 text-xs font-bold text-orange-500">+ Add option</button>}
-                </div>
-              ))}
-              <button type="button" onClick={() => setQuiz([...quiz, { prompt: '', options: ['', '', '', ''], correct: 0 }])} className={`${btnGhost} w-full`}><Plus size={15} /> Add Question</button>
-              <p className="text-[11px] text-slate-400">Tick the correct option. Students never see the answers until they submit; their results appear under “Quiz Reports”.</p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2"><p className="flex-1 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Questions · {parsed?.quiz.length ?? 0}</p>
+                <button type="button" onClick={() => setHelp(!help)} className="text-xs font-bold text-indigo-600">{help ? 'Hide the format' : 'How to write questions'}</button></div>
+              {help && <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100 text-xs text-slate-700 space-y-2">
+                <p>Write one question per block and leave an empty line between blocks. Start each block with the question type in brackets. Mark correct options with <b>*</b> and wrong ones with <b>-</b>. Accepted typed answers start with <b>=</b> (alternatives separated by <b>|</b>). An explanation shown after checking starts with <b>?</b>. A reading passage above a question starts with <b>&gt;</b>.</p>
+                <pre className="bg-white rounded-xl p-3 overflow-x-auto font-mono text-[12px] leading-relaxed" data-no-i18n>{QUIZ_HELP}</pre>
+                <button type="button" onClick={() => setScript((s) => (s.trim() ? `${s.trim()}\n\n${QUIZ_HELP}` : QUIZ_HELP))} className="text-xs font-bold text-orange-500">Insert this example</button>
+              </div>}
+              <textarea rows={14} className={`${inputCls} font-mono text-[13px]`} value={script} onChange={(e) => setScript(e.target.value)} data-no-i18n placeholder={'[single] She ___ a teacher.\n* is\n- are\n- am'} />
+              {parsed && parsed.errors.length > 0 && <ul className="p-3 rounded-xl bg-red-50 border border-red-100 text-xs text-red-700 list-disc pl-6 space-y-0.5">{parsed.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>}
+              {parsed && !parsed.errors.length && parsed.quiz.length > 0 && <p className="text-xs text-emerald-700 font-semibold">{parsed.quiz.length} questions ready: {QTYPES.filter((t) => parsed.quiz.some((q) => q.type === t.k)).map((t) => `${parsed.quiz.filter((q) => q.type === t.k).length} ${t.label}`).join(' · ')}</p>}
+              <p className="text-[11px] text-slate-400">Students never see the answers until they submit; their results appear under “Quiz Reports”.</p>
             </div>
           ))}
           <Field label="Worksheet / extra resource link (optional)"><input className={inputCls} value={f.resource_url} onChange={(e) => setF({ ...f, resource_url: e.target.value })} placeholder="https://drive.google.com/..." /></Field>
@@ -387,6 +399,101 @@ function QuizReports({ cid }: { cid: number }) {
               <td className="px-3 py-3 text-xs text-slate-500">{fmtDateTime(a.created_at)}</td></tr>
           ))}{!list.length && <tr><td colSpan={4} className="p-8 text-center text-slate-400 text-xs">No quiz attempts yet.</td></tr>}</tbody>
         </table></div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- student work (writing / speaking)
+type Resp = { id: number; lesson_id: number; student_id: string; body: string | null; audio_path: string | null; status: string; score: number | null; feedback: string | null; submitted_at: string;
+  lesson: { title: string; kind: string } | null; student: { full_name: string; email: string } | null };
+function StudentWorkReview({ cid }: { cid: number }) {
+  const [tab, setTab] = useState('submitted');
+  const { data, loading, reload } = useData<Resp[]>(() => supabase.from('lesson_responses')
+    .select('*, lesson:lessons!inner(title, kind, unit:course_units!inner(course_id)), student:profiles!lesson_responses_student_id_fkey(full_name,email)')
+    .eq('lesson.unit.course_id', cid).order('submitted_at', { ascending: false }), [cid]);
+  const [open, setOpen] = useState<Resp | null>(null);
+  const list = (data ?? []).filter((r) => tab === 'all' || r.status === tab);
+  return (
+    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="p-4 flex flex-wrap gap-3 items-center border-b border-slate-100">
+        <h2 className="flex-1 font-bold text-slate-800 flex items-center gap-2"><PenLine size={18} />Writing and speaking work</h2>
+        <div className="inline-flex bg-slate-50 p-1 rounded-xl border border-slate-200">{['submitted', 'reviewed', 'all'].map((t) => <button key={t} onClick={() => setTab(t)} className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize ${tab === t ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>{t === 'submitted' ? 'To review' : t}</button>)}</div>
+      </div>
+      {loading ? <Spinner /> : !list.length ? <p className="p-8 text-center text-slate-400 text-sm">Nothing here.</p> : (
+        <div className="divide-y divide-slate-100">{list.map((r) => (
+          <button key={r.id} onClick={() => setOpen(r)} className="w-full text-left px-5 py-3 flex flex-wrap items-center gap-3 hover:bg-slate-50">
+            <span className="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 grid place-items-center">{r.lesson?.kind === 'speaking' ? <Mic size={16} /> : <PenLine size={16} />}</span>
+            <div className="flex-1 min-w-48"><p className="font-bold text-slate-800">{r.student?.full_name}</p><p className="text-[11px] text-slate-400">{r.lesson?.title} · {fmtDateTime(r.submitted_at)}</p></div>
+            {r.score != null && <span className="text-sm font-black">{r.score}</span>}<StatusPill status={r.status} />
+          </button>
+        ))}</div>
+      )}
+      {open && <ReviewModal r={open} onClose={() => setOpen(null)} onDone={() => { setOpen(null); reload(); }} />}
+    </div>
+  );
+}
+
+function ReviewModal({ r, onClose, onDone }: { r: Resp; onClose: () => void; onDone: () => void }) {
+  const [score, setScore] = useState(r.score != null ? String(r.score) : '');
+  const [fb, setFb] = useState(r.feedback ?? '');
+  const [busy, setBusy] = useState(false);
+  const audio = useData<string>(async () => (r.audio_path ? { data: (await supabase.storage.from('uploads').createSignedUrl(r.audio_path, 900)).data?.signedUrl ?? null, error: null } : { data: null, error: null }), [r.id]);
+  const save = async () => {
+    if (!fb.trim()) return toast.err('Write your feedback for the student.');
+    setBusy(true);
+    const { error } = await supabase.from('lesson_responses').update({ status: 'reviewed', score: score === '' ? null : Number(score), feedback: fb.trim() }).eq('id', r.id);
+    if (!error) await notify(r.student_id, 'Your teacher reviewed your work', r.lesson?.title ?? '', '/student/my-learning');
+    setBusy(false);
+    if (error) toast.err(error.message); else { toast.ok('Feedback sent to the student'); onDone(); }
+  };
+  return (
+    <Modal open onClose={onClose} title={`${r.student?.full_name ?? ''} · ${r.lesson?.title ?? ''}`} wide>
+      <div className="space-y-4">
+        {r.body && <div className="p-4 rounded-2xl bg-slate-50 text-sm whitespace-pre-line max-h-80 overflow-y-auto">{r.body}<p className="text-[11px] text-slate-400 mt-2">{r.body.trim().split(/\s+/).length} words</p></div>}
+        {r.audio_path && (audio.data ? <audio controls src={audio.data} className="w-full" /> : <Spinner />)}
+        <div className="grid sm:grid-cols-4 gap-3">
+          <Field label="Score (optional)"><input type="number" className={inputCls} value={score} onChange={(e) => setScore(e.target.value)} placeholder="e.g. 8" /></Field>
+          <div className="sm:col-span-3"><Field label="Feedback for the student"><textarea rows={4} className={inputCls} value={fb} onChange={(e) => setFb(e.target.value)} /></Field></div>
+        </div>
+        <button disabled={busy} onClick={save} className={`${btnPrimary} w-full`}>{busy ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Send Feedback</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ---------------------------------------------------------------- questions students asked about lessons
+type LQ = { id: number; student_id: string; body: string; answer: string | null; answered_at: string | null; created_at: string; lesson: { title: string } | null; student: { full_name: string } | null };
+function StudentQuestions({ cid }: { cid: number }) {
+  const [tab, setTab] = useState('open');
+  const { data, loading, reload } = useData<LQ[]>(() => supabase.from('lesson_questions')
+    .select('*, lesson:lessons!inner(title, unit:course_units!inner(course_id)), student:profiles!lesson_questions_student_id_fkey(full_name)')
+    .eq('lesson.unit.course_id', cid).order('created_at', { ascending: false }), [cid]);
+  const [draft, setDraft] = useState<Record<number, string>>({});
+  const list = (data ?? []).filter((q) => tab === 'all' || (tab === 'open' ? !q.answer : !!q.answer));
+  const answer = async (q: LQ) => {
+    const a = (draft[q.id] ?? q.answer ?? '').trim(); if (!a) return toast.err('Write the answer first.');
+    const { error } = await supabase.from('lesson_questions').update({ answer: a }).eq('id', q.id);
+    if (error) return toast.err(error.message);
+    await notify(q.student_id, 'Your teacher answered your question', q.lesson?.title ?? '', '/student/my-learning');
+    toast.ok('Answer sent'); reload();
+  };
+  return (
+    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="p-4 flex flex-wrap gap-3 items-center border-b border-slate-100">
+        <h2 className="flex-1 font-bold text-slate-800 flex items-center gap-2"><MessageCircleQuestion size={18} />Questions from students</h2>
+        <div className="inline-flex bg-slate-50 p-1 rounded-xl border border-slate-200">{['open', 'answered', 'all'].map((t) => <button key={t} onClick={() => setTab(t)} className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize ${tab === t ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>{t === 'open' ? 'Waiting' : t}</button>)}</div>
+      </div>
+      {loading ? <Spinner /> : !list.length ? <p className="p-8 text-center text-slate-400 text-sm">Nothing here.</p> : (
+        <div className="divide-y divide-slate-100">{list.map((q) => (
+          <div key={q.id} className="p-5 space-y-2">
+            <p className="text-[11px] text-slate-400"><b className="text-slate-600">{q.student?.full_name}</b> · {q.lesson?.title} · {fmtDateTime(q.created_at)}</p>
+            <p className="text-sm font-semibold text-slate-800 whitespace-pre-line">{q.body}</p>
+            <div className="flex gap-2"><textarea rows={2} className={inputCls} value={draft[q.id] ?? q.answer ?? ''} onChange={(e) => setDraft({ ...draft, [q.id]: e.target.value })} placeholder="Your answer" />
+              <button onClick={() => answer(q)} className={btnPrimary}><Send size={15} /></button></div>
+            {q.answered_at && <p className="text-[11px] text-emerald-600">Answered {fmtDateTime(q.answered_at)}</p>}
+          </div>
+        ))}</div>
       )}
     </div>
   );
@@ -454,6 +561,6 @@ export function CurriculumPreview() {
 }
 
 function PreviewEl({ l }: { l: Lesson }) {
-  const keys = useData<{ keys: number[] }>(() => (l.kind === 'quiz' ? supabase.from('lesson_quiz_keys').select('keys').eq('lesson_id', l.id).maybeSingle() : Promise.resolve({ data: null, error: null })), [l.id]);
-  return <LessonView lesson={l} quizKeys={keys.data?.keys} />;
+  const keys = useData<{ keys: QuizKey[]; explanations: (string | null)[] }>(() => (l.kind === 'quiz' ? supabase.from('lesson_quiz_keys').select('keys, explanations').eq('lesson_id', l.id).maybeSingle() : Promise.resolve({ data: null, error: null })), [l.id]);
+  return <LessonView lesson={l} quizKeys={keys.data?.keys} quizExplanations={keys.data?.explanations} />;
 }

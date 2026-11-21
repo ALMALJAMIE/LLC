@@ -3,10 +3,11 @@ import ar1 from './ar1';
 import ar2 from './ar2';
 import ar3 from './ar3';
 import ar4 from './ar4';
+import ar5 from './ar5';
 
 export type Lang = 'en' | 'ar';
 const KEY = 'llc-lang';
-const AR: Record<string, string> = { ...ar1, ...ar2, ...ar3, ...ar4 };
+const AR: Record<string, string> = { ...ar1, ...ar2, ...ar3, ...ar4, ...ar5 };
 
 // Status / enum words, matched case-insensitively ("ACTIVE", "Active", "face_to_face"…)
 const WORDS: Record<string, string> = {
@@ -39,6 +40,12 @@ const PATTERNS: [RegExp, (...m: string[]) => string][] = [
   [/^(\d+) min$/, (_, n) => `${n} د`],
   [/^(\d+) weeks?$/, (_, n) => `${n} أسابيع`],
   [/^(\d+) days?$/, (_, n) => `${n} أيام`],
+  [/^Words · (\d+)$/, (_, n) => `الكلمات · ${n}`],
+  [/^Questions · (\d+)$/, (_, n) => `الأسئلة · ${n}`],
+  [/^(\d+) words$/, (_, n) => `${n} كلمة`],
+  [/^(\d+) questions ready\.?$/, (_, n) => `${n} سؤالًا جاهزًا.`],
+  [/^(\d+) questions added$/, (_, n) => `أُضيف ${n} سؤالًا`],
+  [/^Stop · (.+)$/, (_, t) => `إيقاف · ${t}`],
   [/^(\d+) Modules?$/, (_, n) => `${n} وحدات`],
   [/^(\d+) elements?$/, (_, n) => `${n} عناصر`],
   [/^(\d+) (Pts|pts|Points)$/, (_, n) => `${n} درجة`],

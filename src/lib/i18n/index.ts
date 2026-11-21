@@ -5,10 +5,11 @@ import ar3 from './ar3';
 import ar4 from './ar4';
 import ar5 from './ar5';
 import ar6 from './ar6';
+import ar7 from './ar7';
 
 export type Lang = 'en' | 'ar';
 const KEY = 'llc-lang';
-const AR: Record<string, string> = { ...ar1, ...ar2, ...ar3, ...ar4, ...ar5, ...ar6 };
+const AR: Record<string, string> = { ...ar1, ...ar2, ...ar3, ...ar4, ...ar5, ...ar6, ...ar7 };
 
 // Status / enum words, matched case-insensitively ("ACTIVE", "Active", "face_to_face"…)
 const WORDS: Record<string, string> = {
@@ -40,6 +41,11 @@ const PATTERNS: [RegExp, (...m: string[]) => string][] = [
   [/^(\d+) minutes?$/, (_, n) => `${n} دقيقة`],
   [/^(\d+) min$/, (_, n) => `${n} د`],
   [/^(\d+) weeks?$/, (_, n) => `${n} أسابيع`],
+  [/^Leave requests waiting · (\d+)$/, (_, n) => `طلبات إجازة بانتظار القرار · ${n}`],
+  [/^(\d+) classes in this period will need a substitute$/, (_, n) => `${n} حصة في هذه الفترة تحتاج بديلًا`],
+  [/^On leave (.+)$/, (_, n) => `في إجازة ${n}`],
+  [/^Room (.+) is already booked at (.+) for (.+)\.$/, (_, r, t, o) => `القاعة ${r} محجوزة في ${t} لحصة ${o}.`],
+  [/^The instructor already teaches (.+) at (.+)\.$/, (_, o, t) => `المدرس لديه حصة ${o} في ${t}.`],
   [/^(\d+) days?$/, (_, n) => `${n} أيام`],
   [/^(\d+) days?$/, (_, n) => `${n} يوم`],
   [/^(\d+) min$/, (_, n) => `${n} د`],

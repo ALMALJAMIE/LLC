@@ -52,6 +52,12 @@ export function PlacementTestsAdmin() {
     const { error } = await supabase.from('placement_tests').update(row).eq('id', t.id);
     if (error) toast.err(error.message); else { toast.ok(msg); reload(); }
   };
+  const newVersion = async (t: Test) => {
+    if (!(await askConfirm(`Make a new draft version of "${t.title}" with all its sections and questions? The current version stays as it is.`))) return;
+    const { data, error } = await supabase.rpc('duplicate_placement_test', { p_test: t.id });
+    if (error) return toast.err(error.message);
+    toast.ok('New version created'); nav(`${base(user.role)}/${data}/manage`);
+  };
   const del = async (t: Test) => {
     if (!await askConfirm(`Delete "${t.title}" with all its sections and questions?`)) return;
     const { error } = await supabase.from('placement_tests').delete().eq('id', t.id);
@@ -94,6 +100,7 @@ export function PlacementTestsAdmin() {
               <button onClick={() => nav(`${base(user.role)}/${t.id}/manage`)} className="py-2.5 rounded-xl bg-slate-900 hover:bg-orange-500 text-white text-xs font-bold">Manage Sections</button>
               <button onClick={() => nav(`${base(user.role)}/${t.id}/details`)} className="py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold flex items-center justify-center gap-1"><Eye size={14} />Details</button>
             </div>
+            <button onClick={() => newVersion(t)} className="mt-2 py-2 rounded-xl text-xs font-bold text-indigo-600 hover:bg-indigo-50">Copy as a new version</button>
             {lead && <div className="grid grid-cols-2 gap-2 mt-2">
               {t.approval === 'draft' ? <button onClick={() => patch(t, { approval: 'approved' }, 'Test approved')} className="py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100 flex items-center justify-center gap-1"><Check size={14} />Approve</button>
                 : <button onClick={() => patch(t, { approval: 'draft', is_active: false }, 'Moved back to draft')} className="py-2 rounded-xl bg-slate-50 text-slate-500 text-xs font-bold border border-slate-200">Back to draft</button>}

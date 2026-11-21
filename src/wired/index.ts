@@ -86,6 +86,12 @@ export const WIRED: Record<string, Partial<Record<Role, C>>> = {
   '/student/private-sessions': { student: named(() => import('./shared/PrivateSessions'), 'StudentPrivateSessions') },
   '/instructor/private-sessions': { instructor: named(() => import('./shared/PrivateSessions'), 'StaffPrivateSessions') },
   '/admin/private-sessions': { admin: named(() => import('./shared/PrivateSessions'), 'StaffPrivateSessions') },
+  '/admin/rooms': { admin: named(() => import('./shared/Academic'), 'Rooms') },
+  '/admin/instructors': { admin: named(() => import('./shared/Academic'), 'InstructorsOverview') },
+  '/admin/attendance-corrections': { admin: named(() => import('./shared/Academic'), 'AttendanceCorrections') },
+  '/admin/grade-moderation': { admin: named(() => import('./shared/Academic'), 'GradeModeration') },
+  '/instructor/availability': { instructor: named(() => import('./shared/Academic'), 'MyAvailability') },
+  '/instructor/attendance-corrections': { instructor: named(() => import('./shared/Academic'), 'AttendanceCorrections') },
   '/student/course/:id': { student: lazy(() => import('./student/CoursePlayer')) },
   '/student/assessments': { student: named(() => import('./placement/Student'), 'StudentPlacement') },
   '/student/placement/:id': { student: named(() => import('./placement/Student'), 'PlacementTake') },
@@ -142,7 +148,7 @@ for (const path of [
   '/admin-academic-session', '/admin-categories', '/admin-levels', '/admin-courses', '/admin-batches',
   '/admin-curriculum', '/admin-curriculum/:id/edit', '/admin-curriculum/:id/view', '/admin/lessons/review', '/admin/timetable', '/admin/master-timetable', '/admin/substitutes', '/admin/absence-approvals',
   '/admin-placement-tests', '/admin-placement-tests/:id/manage', '/admin-placement-tests/:id/details', '/admin/level-config', '/admin-placement-requests',
-  '/admin/assignments', '/admin/private-sessions', '/admin/exam-templates', '/admin-grading-scales', '/admin-rubrics-bank', '/admin-certificate-templates', '/admin-reviews',
+  '/admin/assignments', '/admin/private-sessions', '/admin/rooms', '/admin/instructors', '/admin/attendance-corrections', '/admin/grade-moderation', '/admin/exam-templates', '/admin-grading-scales', '/admin-rubrics-bank', '/admin-certificate-templates', '/admin-reviews',
 ]) {
   const c = WIRED[path]?.admin;
   if (c) WIRED[path] = { ...WIRED[path], academic: c };

@@ -56,7 +56,10 @@ export function PlacementResults() {
   const [mark, setMark] = useState<R | null>(null);
   const [lvl, setLvl] = useState('');
   const [note, setNote] = useState('');
-  const list = (data ?? []).filter((r) => tab === 'all' || r.status === tab);
+  const appeals = useData<{ id: number; attempt_id: number; reason: string; status: string; response: string | null; created_at: string }[]>(() => supabase.from('placement_appeals').select('*').order('created_at', { ascending: false }));
+  const appealOf = (r: R) => appeals.data?.find((a) => a.attempt_id === r.id);
+  const [appeal, setAppeal] = useState<R | null>(null);
+  const list = (data ?? []).filter((r) => tab === 'all' || (tab === 'appeals' ? appealOf(r)?.status === 'pending' : r.status === tab));
   const confirmLevel = async () => {
     if (!open || !lvl) return toast.err('Choose the final level.');
     const { error } = await supabase.from('placement_attempts').update({ final_level_id: Number(lvl), review_note: note || null, status: 'reviewed', reviewer_id: user.id }).eq('id', open.id);
@@ -73,7 +76,7 @@ export function PlacementResults() {
     <Page wide>
       {user.demo && <DemoNotice />}
       <PageHero badge="Placement" badgeColor="indigo" title="Placement Results" illus="results" subtitle="Auto-graded placement tests. Confirm or adjust each student's level; the student is notified.">
-        <div className="inline-flex bg-slate-50 p-1 rounded-xl border border-slate-200">{['submitted', 'reviewed', 'all'].map((t) => <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg text-xs font-bold capitalize ${tab === t ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>{t === 'submitted' ? 'To review' : t}</button>)}</div>
+        <div className="inline-flex bg-slate-50 p-1 rounded-xl border border-slate-200">{['submitted', 'reviewed', 'appeals', 'all'].map((t) => <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg text-xs font-bold capitalize ${tab === t ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>{t === 'submitted' ? 'To review' : t}</button>)}</div>
       </PageHero>
       {loading ? <Spinner /> : (
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-x-auto">
@@ -86,6 +89,7 @@ export function PlacementResults() {
                 <td className="px-3 py-3">{r.final ? <span className="font-bold text-emerald-700">{r.final.name}</span> : <span className="text-slate-500">Suggested: <b>{r.suggested?.name ?? '—'}</b></span>}</td>
                 <td className="px-3 py-3 text-right whitespace-nowrap"><button onClick={() => { setOpen(r); setLvl(String(r.final_level_id ?? r.suggested?.id ?? '')); setNote(r.review_note ?? ''); }} className="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold">{r.status === 'reviewed' ? 'Edit' : 'Confirm'}</button>
                   <button title="Mark answers / interview" onClick={() => setMark(r)} className="ml-1 p-1.5 text-slate-400 hover:text-indigo-600"><PenLine size={15} /></button>
+                  {appealOf(r) && <button onClick={() => setAppeal(r)} className={`ml-1 px-2 py-1 rounded-lg text-[10px] font-black uppercase ${appealOf(r)!.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>Appeal</button>}
                   <button title="Allow retake" onClick={() => retake(r)} className="ml-1 p-1.5 text-slate-400 hover:text-orange-500"><RotateCcw size={15} /></button></td></tr>
             ))}{!list.length && <tr><td colSpan={6} className="p-8 text-center text-slate-400 text-xs">Nothing here.</td></tr>}</tbody></table>
         </div>
@@ -95,10 +99,11 @@ export function PlacementResults() {
           <p className="text-sm text-slate-500">Score {open?.pct}% · suggested <b>{open?.suggested?.name ?? '—'}</b></p>
           {open?.needs_marking && <p className="text-xs p-3 rounded-xl bg-amber-50 border border-amber-100 text-amber-800">Some written answers are not marked yet. Mark them first (pen icon) so the score and suggested level are complete.</p>}
           <Field label="Final level"><select className={inputCls} value={lvl} onChange={(e) => setLvl(e.target.value)}><option value="">— Select —</option>{(levels.data ?? []).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}</select></Field>
-          <Field label="Note to student (optional)"><textarea rows={3} className={inputCls} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Strong reading; practise past tenses." /></Field>
+          <Field label={open && lvl && open.suggested && String(open.suggested.id) !== lvl ? 'Reason for a different level than suggested (required)' : 'Note to student (optional)'}><textarea rows={3} className={inputCls} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Strong reading; practise past tenses." /></Field>
           <button onClick={confirmLevel} className={`${btnPrimary} w-full`}><Check size={16} /> Confirm Level</button>
         </div>
       </Modal>
+      {appeal && appealOf(appeal) && <AppealModal r={appeal} a={appealOf(appeal)!} onClose={() => setAppeal(null)} onDone={() => { setAppeal(null); appeals.reload(); reload(); }} onChangeLevel={() => { const r = appeal; setAppeal(null); setOpen(r); setLvl(String(r.final_level_id ?? r.suggested?.id ?? '')); setNote(''); }} />}
       {mark && <MarkModal r={mark} onClose={() => setMark(null)} onDone={() => { setMark(null); reload(); }} />}
     </Page>
   );
@@ -153,6 +158,34 @@ function MarkModal({ r, onClose, onDone }: { r: R; onClose: () => void; onDone: 
           <button disabled={busy} onClick={save} className={`${btnPrimary} w-full`}>{busy ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save Marks</button>
         </div>
       )}
+    </Modal>
+  );
+}
+
+function AppealModal({ r, a, onClose, onDone, onChangeLevel }: { r: { id: number; student?: { full_name: string } | null; final?: { name: string } | null }; a: { id: number; reason: string; status: string; response: string | null }; onClose: () => void; onDone: () => void; onChangeLevel: () => void }) {
+  const [resp, setResp] = useState(a.response ?? '');
+  const [busy, setBusy] = useState(false);
+  const decide = async (status: 'accepted' | 'rejected') => {
+    if (!resp.trim()) return toast.err('Write your answer to the student.');
+    setBusy(true);
+    const { error } = await supabase.from('placement_appeals').update({ status, response: resp.trim() }).eq('id', a.id);
+    setBusy(false);
+    if (error) toast.err(error.message); else { toast.ok('The student was notified'); onDone(); }
+  };
+  return (
+    <Modal open onClose={onClose} title={`Appeal · ${r.student?.full_name ?? ''}`}>
+      <div className="space-y-4">
+        <p className="text-sm text-slate-500">Current level: <b>{r.final?.name ?? '—'}</b></p>
+        <p className="p-4 rounded-2xl bg-amber-50 border border-amber-100 text-sm whitespace-pre-line">{a.reason}</p>
+        {a.status === 'pending' ? <>
+          <Field label="Answer to the student"><textarea rows={3} className={inputCls} value={resp} onChange={(e) => setResp(e.target.value)} /></Field>
+          <div className="grid grid-cols-2 gap-2">
+            <button disabled={busy} onClick={() => decide('rejected')} className="py-2.5 rounded-xl border border-slate-200 text-sm font-bold">Keep the level</button>
+            <button disabled={busy} onClick={() => decide('accepted')} className={btnPrimary}>Accept appeal</button>
+          </div>
+          <button onClick={onChangeLevel} className="text-xs font-bold text-indigo-600">Change the level first →</button>
+        </> : <p className="text-sm"><b className="capitalize">{a.status}</b>: {a.response}</p>}
+      </div>
     </Modal>
   );
 }

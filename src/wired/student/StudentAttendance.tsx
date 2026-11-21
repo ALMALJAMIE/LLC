@@ -3,7 +3,7 @@ import { BookOpen, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { fmtDate, useData } from '../../lib/db';
-import { DemoNotice, Empty, Modal, Page, PageHero, Spinner, StatusPill } from '../../components/ui';
+import { DemoNotice, Empty, Field, Modal, Page, PageHero, Spinner, StatusPill, btnPrimary, inputCls, toast } from '../../components/ui';
 import { hhmm, useMyEnrollments, type ClassSession, type MyBatch } from './hooks';
 
 export default function StudentAttendance() {
@@ -41,6 +41,16 @@ function Records({ e, onClose }: { e: MyBatch; onClose: () => void }) {
   const sessions = useData<ClassSession[]>(() => supabase.from('class_sessions').select('*').eq('batch_id', e.batch!.id).lte('starts_at', new Date().toISOString()).order('starts_at', { ascending: false }));
   const att = useData<{ session_id: number; status: string }[]>(() => supabase.from('attendance').select('session_id,status').eq('student_id', user.id));
   const st = (id: number) => att.data?.find((a) => a.session_id === id)?.status ?? 'absent';
+  const corr = useData<{ session_id: number; status: string }[]>(() => supabase.from('attendance_corrections').select('session_id,status').eq('student_id', user.id));
+  const [ask, setAsk] = useState<ClassSession | null>(null);
+  const [cf, setCf] = useState({ status: 'present', reason: '' });
+  const sendCorr = async () => {
+    if (!ask) return;
+    if (cf.reason.trim().length < 5) return toast.err('Please explain what happened.');
+    const { error } = await supabase.from('attendance_corrections').insert({ session_id: ask.id, student_id: user.id, requested_status: cf.status, reason: cf.reason.trim() });
+    if (error) return toast.err(error.message);
+    toast.ok('Request sent to your instructor'); setAsk(null); setCf({ status: 'present', reason: '' }); corr.reload();
+  };
   const total = sessions.data?.length ?? 0;
   const counted = (sessions.data ?? []).filter((s) => ['present', 'late', 'excused'].includes(st(s.id))).length;
   const pct = total ? Math.round((counted / total) * 100) : 100;
@@ -58,13 +68,24 @@ function Records({ e, onClose }: { e: MyBatch; onClose: () => void }) {
             {(sessions.data ?? []).map((s) => (
               <div key={s.id} className="flex items-center justify-between px-4 py-3 text-sm">
                 <div><p className="font-bold text-slate-700">{s.title}</p><p className="text-xs text-slate-400">{fmtDate(s.starts_at)} · {hhmm(s.starts_at)}</p></div>
-                <StatusPill status={st(s.id)} />
+                <div className="flex items-center gap-2"><StatusPill status={st(s.id)} />
+                  {(st(s.id) === 'absent' || st(s.id) === 'late') && (corr.data?.find((c) => c.session_id === s.id && c.status === 'pending')
+                    ? <span className="text-[10px] font-bold text-amber-600">Correction requested</span>
+                    : <button onClick={() => setAsk(s)} className="text-[11px] font-bold text-indigo-600">Wrong?</button>)}</div>
               </div>
             ))}
             {!total && <p className="p-6 text-center text-sm text-slate-400">No classes held yet.</p>}
           </div>
         </>
       )}
+      {ask && <Modal open onClose={() => setAsk(null)} title={`Attendance correction · ${ask.title}`}>
+        <div className="space-y-4">
+          <p className="text-sm text-slate-500">{fmtDate(ask.starts_at)} · {hhmm(ask.starts_at)} — recorded as <b>{st(ask.id)}</b>.</p>
+          <Field label="It should be"><select className={inputCls} value={cf.status} onChange={(e) => setCf({ ...cf, status: e.target.value })}><option value="present">Present</option><option value="late">Late</option><option value="excused">Excused</option></select></Field>
+          <Field label="What happened?"><textarea rows={3} className={inputCls} value={cf.reason} onChange={(e) => setCf({ ...cf, reason: e.target.value })} placeholder="e.g. I was in class but the QR scan did not work." /></Field>
+          <button onClick={sendCorr} className={`${btnPrimary} w-full`}>Send request</button>
+        </div>
+      </Modal>}
     </Modal>
   );
 }

@@ -192,7 +192,7 @@ function AttendanceSheet({ s, onClose }: { s: Sess; onClose: () => void }) {
 }
 
 // ---------------- Manage exams ----------------
-type Exam = { id: number; title: string; kind: string; starts_at: string | null; duration_min: number; total_marks: number; status: string; batch_id: number | null; batch: { name: string } | null };
+type Exam = { id: number; title: string; kind: string; starts_at: string | null; duration_min: number; total_marks: number; status: string; batch_id: number | null; batch: { name: string } | null; results_released?: boolean };
 export function InstructorExams() {
   const user = useAuth((s) => s.user);
   const batches = useTeaching(['upcoming', 'active', 'completed']);
@@ -296,9 +296,10 @@ function GradeSheet({ exam, onClose }: { exam: Exam; onClose: () => void }) {
     if (!out.length) return toast.err('Enter at least one score.');
     setBusy(true);
     const { error } = await supabase.from('exam_results').upsert(out, { onConflict: 'exam_id,student_id' });
-    if (!error) await Promise.all(out.map((r) => notify(r.student_id, 'New result published', `${exam.title}: ${r.score}/${exam.total_marks} (${r.grade})`, '/student/exam-results')));
+    const released = exam.results_released !== false;
+    if (!error && released) await Promise.all(out.map((r) => notify(r.student_id, 'New result published', `${exam.title}: ${r.score}/${exam.total_marks} (${r.grade})`, '/student/exam-results')));
     setBusy(false);
-    if (error) toast.err(error.message); else { toast.ok(`${out.length} results published`); res.reload(); }
+    if (error) toast.err(error.message); else { toast.ok(released ? `${out.length} results published` : 'Marks saved. The academic team will review them and release the results to students.'); res.reload(); }
   };
   return (
     <Modal open onClose={onClose} title={`${exam.title} · out of ${exam.total_marks}`} wide>
@@ -318,7 +319,8 @@ function GradeSheet({ exam, onClose }: { exam: Exam; onClose: () => void }) {
               );
             })}
           </div>
-          <button disabled={busy} onClick={publish} className={`${btnPrimary} w-full mt-5`}>{busy ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Publish Results</button>
+          <button disabled={busy} onClick={publish} className={`${btnPrimary} w-full mt-5`}>{busy ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {exam.results_released === false ? 'Save Marks for Review' : 'Publish Results'}</button>
+          {exam.results_released === false && <p className="text-[11px] text-slate-500 mt-2 text-center">Mid-term and final results are checked by the academic team before students see them.</p>}
         </>
       )}
     </Modal>

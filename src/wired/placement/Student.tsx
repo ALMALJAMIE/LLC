@@ -18,6 +18,14 @@ export function StudentPlacement() {
   const tests = useData<Test[]>(() => supabase.from('placement_tests').select('id,title,description,duration_min,config, course:courses(title)').eq('is_active', true).eq('approval', 'approved').neq('config', 'interview').order('priority', { ascending: false }).order('id'));
   const atts = useData<Att[]>(() => supabase.from('placement_attempts').select('id,test_id,status,pct,needs_marking,submitted_at,started_at,review_note,section_scores, suggested:levels!placement_attempts_suggested_level_id_fkey(name,cefr), final:levels!placement_attempts_final_level_id_fkey(id,name,cefr), test:placement_tests(title)').eq('student_id', user.id).order('started_at', { ascending: false }));
   const [busy, setBusy] = useState<number | null>(null);
+  const appeals = useData<{ attempt_id: number; status: string; response: string | null }[]>(() => supabase.from('placement_appeals').select('attempt_id,status,response'));
+  const appealIt = async (attemptId: number) => {
+    const reason = await askText('Why do you think your level should be different? (at least 10 characters)');
+    if (reason === null) return;
+    if (reason.trim().length < 10) return toast.err('Please explain in a little more detail.');
+    const { error } = await supabase.from('placement_appeals').insert({ attempt_id: attemptId, student_id: user.id, reason: reason.trim() });
+    if (error) toast.err(error.message); else { toast.ok('Appeal sent. The academic team will answer you.'); appeals.reload(); }
+  };
   const start = async (t: Test) => {
     if (user.demo) return toast.err('Sign in with a real account to take the test.');
     setBusy(t.id);
@@ -41,6 +49,8 @@ export function StudentPlacement() {
               <div className="flex items-end gap-4 mt-3"><Trophy className="text-orange-400" size={36} /><div><p className="text-3xl font-black">{lvl?.name ?? '—'} {lvl?.cefr && <span className="text-base text-slate-300">({lvl.cefr})</span>}</p><p className="text-xs text-slate-300">{a.final ? 'Confirmed level' : a.needs_marking ? 'Your written answers are being marked' : 'Suggested level — awaiting review'}{!a.needs_marking || a.final ? ` · score ${a.pct}%` : ''}</p></div></div>
               {a.section_scores && <div className="grid grid-cols-3 gap-2 mt-5">{Object.entries(a.section_scores).map(([k, v]) => <div key={k} className="p-2.5 rounded-xl bg-white/5 text-center"><p className="text-[10px] uppercase font-bold text-slate-400">{k}</p><p className="font-black">{v.score}/{v.total}</p></div>)}</div>}
               {a.review_note && <p className="text-xs text-slate-300 mt-4">“{a.review_note}”</p>}
+              {a.status === 'reviewed' && (appeals.data?.find((x) => x.attempt_id === a.id) ? (() => { const ap = appeals.data!.find((x) => x.attempt_id === a.id)!; return <p className="mt-3 text-xs text-slate-300">Your appeal: <b className="capitalize text-white">{ap.status}</b>{ap.response ? ` — ${ap.response}` : ''}</p>; })()
+                : <button onClick={() => appealIt(a.id)} className="mt-3 block text-xs font-bold text-orange-300 underline">Disagree with this level? Send an appeal</button>)}
               <button onClick={() => nav('/student/courses')} className="mt-5 px-4 py-2 rounded-xl bg-orange-500 text-xs font-bold">Find a course at my level →</button>
             </div>
           );

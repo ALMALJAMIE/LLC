@@ -78,6 +78,7 @@ export default function ClassScheduler({ title = 'Timetable Management', badge =
 
 function Generate({ batch, onClose, onDone }: { batch: B; onClose: () => void; onDone: () => void }) {
   const today = new Date().toISOString().slice(0, 10);
+  const rooms = useData<{ id: number; name: string; capacity: number | null }[]>(() => supabase.from('rooms').select('id,name,capacity').eq('is_active', true).order('name'));
   const [f, setF] = useState({ title: '', days: [0, 2] as number[], start: '09:00', end: '10:30', from: batch.start_date && batch.start_date > today ? batch.start_date : today, to: batch.end_date ?? today, mode: batch.mode === 'face_to_face' ? 'face_to_face' : 'online', room: '', url: '' });
   const [busy, setBusy] = useState(false);
   const rows = useMemo(() => {
@@ -111,7 +112,7 @@ function Generate({ batch, onClose, onDone }: { batch: B; onClose: () => void; o
         <Field label="From"><input type="date" className={inputCls} value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} /></Field>
         <Field label="To"><input type="date" className={inputCls} value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} /></Field>
         {f.mode === 'online' ? <div className="sm:col-span-2"><Field label="Meeting link (optional, can be set per class later)"><input className={inputCls} value={f.url} onChange={(e) => setF({ ...f, url: e.target.value })} placeholder="https://meet.google.com/..." /></Field></div>
-          : <div className="sm:col-span-2"><Field label="Room"><input className={inputCls} value={f.room} onChange={(e) => setF({ ...f, room: e.target.value })} placeholder="e.g. Room 2" /></Field></div>}
+          : <div className="sm:col-span-2"><Field label="Room"><input list="llc-rooms" className={inputCls} value={f.room} onChange={(e) => setF({ ...f, room: e.target.value })} placeholder="e.g. Room 2" /><datalist id="llc-rooms">{(rooms.data ?? []).map((r) => <option key={r.id} value={r.name}>{r.capacity ? `${r.capacity} seats` : ''}</option>)}</datalist></Field></div>}
       </div>
       <button disabled={busy} onClick={save} className={`${btnPrimary} w-full mt-6`}>{busy && <Loader2 size={16} className="animate-spin" />} Create {rows.length} classes</button>
     </Modal>

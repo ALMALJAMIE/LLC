@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Loader2, Tag, Upload } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
-import { money } from '../lib/db';
+import { fmtDateTime, money } from '../lib/db';
 import { useBilling, useCenter } from '../lib/site';
 import { useApprox } from '../lib/price';
 import { payOnline } from '../lib/stripe';
@@ -36,8 +36,8 @@ export function ReceiptPicker({ file, onFile }: { file: File | null; onFile: (f:
 }
 
 /** Price breakdown, discount code, payment method and receipt — then one server call that creates the payment. */
-export default function PayBox({ kind, item, batch, onDone, onCancel, label }: {
-  kind: 'course' | 'plan' | 'package'; item: number; batch?: number | null; onDone: () => void; onCancel: () => void; label?: string;
+export default function PayBox({ kind, item, batch, option, onDone, onCancel, label }: {
+  kind: 'course' | 'plan' | 'package'; item: number; batch?: number | null; option?: number | null; onDone: () => void; onCancel: () => void; label?: string;
 }) {
   const user = useAuth((s) => s.user)!;
   const CENTER = useCenter();
@@ -52,14 +52,14 @@ export default function PayBox({ kind, item, batch, onDone, onCancel, label }: {
   const [busy, setBusy] = useState(false);
 
   const load = async (c: string) => {
-    const { data, error } = await supabase.rpc('price_quote', { p_kind: kind, p_item: item, p_code: c || null });
+    const { data, error } = await supabase.rpc('price_quote', { p_kind: kind, p_item: item, p_code: c || null, p_option: option ?? null });
     if (error) return toast.err(error.message);
     const q = (data as Quote[])[0];
     if (c && q.code_error) { toast.err(q.code_error); return; }
     setQuote(q); setApplied(c);
     if (c) toast.ok('Discount applied');
   };
-  useEffect(() => { if (!user.demo) load(''); }, [kind, item]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!user.demo) load(''); }, [kind, item, option]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const free = quote ? Number(quote.total) === 0 : false;
   const online = !!CENTER.bank.onlinePay && !free;
@@ -67,15 +67,14 @@ export default function PayBox({ kind, item, batch, onDone, onCancel, label }: {
 
   const submit = async () => {
     if (user.demo) return toast.err('Sign in with a real account to continue.');
-    if (!free && !byCard && !receipt) return toast.err('Please attach your payment receipt.');
     setBusy(true);
     const path = !free && !byCard && receipt ? await uploadReceipt(user.id, receipt) : null;
-    if (!free && !byCard && !path) { setBusy(false); return; }
+    if (!free && !byCard && receipt && !path) { setBusy(false); return; }
     const { data, error } = await supabase.rpc('checkout', {
-      p_kind: kind, p_item: item, p_code: applied || null, p_method: byCard ? 'card' : 'bank_transfer', p_reference: ref || null, p_receipt: path, p_batch: batch ?? null,
+      p_kind: kind, p_item: item, p_code: applied || null, p_method: byCard ? 'card' : 'bank_transfer', p_reference: ref || null, p_receipt: path, p_batch: batch ?? null, p_option: option ?? null,
     });
     if (error) { setBusy(false); return toast.err(error.code === '23505' ? 'You already requested this course.' : error.message); }
-    const r = data as { payment_id: number; status: string };
+    const r = data as { payment_id: number; status: string; due_at: string | null };
     if (byCard) {
       const err = await payOnline(r.payment_id);
       setBusy(false);
@@ -83,7 +82,8 @@ export default function PayBox({ kind, item, batch, onDone, onCancel, label }: {
       return;
     }
     setBusy(false);
-    toast.ok(r.status === 'paid' ? 'Done! It is ready for you.' : kind === 'course' ? 'Enrollment request sent. We will confirm it shortly.' : 'Payment sent. We will confirm it shortly.');
+    if (r.status === 'pending' && !path && r.due_at) toast.ok(`Order placed. Pay and send your receipt from Payment History before ${fmtDateTime(r.due_at)} — your seat is held until then.`);
+    else toast.ok(r.status === 'paid' ? 'Done! It is ready for you.' : kind === 'course' ? 'Enrollment request sent. We will confirm it shortly.' : 'Payment sent. We will confirm it shortly.');
     onDone();
   };
 
@@ -120,11 +120,12 @@ export default function PayBox({ kind, item, batch, onDone, onCancel, label }: {
           <BankDetails />
           <input className={inputCls} placeholder="Transfer reference (optional)" value={ref} onChange={(e) => setRef(e.target.value)} />
           <ReceiptPicker file={receipt} onFile={setReceipt} />
+          {!receipt && <p className="text-[11px] text-slate-500">{`No receipt yet? Place the order now and send the receipt from Payment History within ${billing.paymentWindowHours ?? 72} hours. Your seat is held until then.`}</p>}
         </div>
       )}
       <div className="flex gap-3 justify-end">
         <button onClick={onCancel} className={btnGhost}>Cancel</button>
-        <button onClick={submit} disabled={busy || !quote} className={btnAccent}>{busy && <Loader2 size={16} className="animate-spin" />} {free ? (label ?? 'Confirm') : byCard ? 'Continue to payment' : 'Submit payment'}</button>
+        <button onClick={submit} disabled={busy || !quote} className={btnAccent}>{busy && <Loader2 size={16} className="animate-spin" />} {free ? (label ?? 'Confirm') : byCard ? 'Continue to payment' : receipt ? 'Submit payment' : 'Place order'}</button>
       </div>
     </div>
   );

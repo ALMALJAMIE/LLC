@@ -1,5 +1,6 @@
+import CheckinQR from '../../components/CheckinQR';
 import { askConfirm, askText } from '../../components/dialogs';
-import { useEffect, useMemo, useState } from 'react';
+import {  useMemo, useState } from 'react';
 import QRCode from 'qrcode';
 import { CalendarPlus, Clock, Globe, Loader2, MapPin, QrCode, Trash2, Video } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
@@ -120,15 +121,10 @@ function Generate({ batch, onClose, onDone }: { batch: B; onClose: () => void; o
 }
 
 function QrModal({ s, onClose }: { s: S; onClose: () => void }) {
-  const url = `${location.origin}${import.meta.env.BASE_URL}student/live-attendance?code=${s.qr_token}`;
-  const [img, setImg] = useState('');
-  useEffect(() => { QRCode.toDataURL(url, { width: 512, margin: 1, color: { dark: '#0b1a3a' } }).then(setImg); }, [url]);
   return (
     <Modal open onClose={onClose} title={`${s.title} · Check-in`}>
       <div className="text-center">
-        <img alt="QR" className="mx-auto w-64 h-64 rounded-2xl border border-slate-100" src={img} />
-        <p className="text-xs text-slate-500 mt-4">Students scan this with their phone camera, or type the code:</p>
-        <p className="text-3xl font-black tracking-[0.3em] text-slate-900 mt-1 font-mono">{s.qr_token}</p>
+        <CheckinQR sessionId={s.id} size={256} />
         <p className="text-[11px] text-slate-400 mt-3">Valid from 15 minutes before the class until it ends. After 10 minutes students are marked late.</p>
       </div>
     </Modal>

@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Award, BookOpen, CalendarPlus, DoorOpen, BrainCircuit, Building2, Calendar, CalendarRange, ChartNoAxesColumn, CircleCheckBig, ClipboardCheck,
   ClipboardList, Clock, CreditCard, DollarSign, FileQuestionMark, FileText, GraduationCap, Inbox, Layers, LayoutDashboard,
-  LifeBuoy, ListChecks, ListOrdered, Crown, Ticket, Undo2, Receipt, Settings, Building2 as Org, Handshake, Flag, Lock, MessageCircle, MonitorPlay, NotebookPen, PenLine, PenTool, Percent, ShieldCheck, ShoppingBag,
+  LifeBuoy, ListChecks, ListOrdered, Link2, Crown, Ticket, Undo2, Receipt, Settings, Building2 as Org, Handshake, Flag, Lock, MessageCircle, MonitorPlay, NotebookPen, PenLine, PenTool, Percent, ShieldCheck, ShoppingBag,
   SquareCheckBig, SquarePen, Star, Tag, UserCog, UserPlus, Users, Video, Wallet,
 } from 'lucide-react';
 
@@ -80,6 +80,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: 'My Contract', icon: PenTool, to: '/agent/contract' },
     { label: 'Programmes', icon: BookOpen, to: '/agent/programmes' },
     { label: 'Timetable', icon: Calendar, to: '/agent/timetable' },
+    { label: 'My Referral Link', icon: Link2, to: '/agent/referrals' },
     { label: 'Enroll Student', icon: UserPlus, to: '/agent/enroll-student' },
     { label: 'My Enrollments', icon: ClipboardCheck, to: '/agent/enrollments' },
     { label: 'My Earnings', icon: DollarSign, to: '/agent/earnings' },

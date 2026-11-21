@@ -1,5 +1,6 @@
 import { CurrencyPicker, Price } from '../../lib/price';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '../../lib/supabase';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BookOpen, Clock, Globe, Layers, MapPin, Search } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
@@ -41,6 +42,7 @@ export default function Catalog() {
                   <div key={l} className="p-3 rounded-xl bg-slate-50 border border-slate-100"><p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1"><I size={12} />{l}</p><p className="font-bold text-slate-800 capitalize">{v}</p></div>
                 ))}
               </div>
+              <PublicOptions courseId={sel.id} />
               <Link to={user?.role === 'student' ? '/student/courses' : '/register'} className="mt-6 w-full inline-flex items-center justify-center py-3.5 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-lg shadow-orange-200">{user?.role === 'student' ? 'Enroll from my portal' : 'Create account to enroll'}</Link>
               <Link to="/placement" className="mt-2 w-full inline-flex items-center justify-center py-3 rounded-2xl text-sm font-bold text-indigo-600">Not sure of your level? Take the placement test</Link>
             </div>
@@ -49,5 +51,23 @@ export default function Catalog() {
       )}
       <WhatsAppFab />
     </SiteShell>
+  );
+}
+
+/** The ways to study a course and their prices (self-paced, live, blended…). */
+function PublicOptions({ courseId }: { courseId: number }) {
+  const [rows, setRows] = useState<{ id: number; name: string; kind: string; description: string | null; price: number }[]>([]);
+  useEffect(() => { supabase.from('course_options').select('id,name,kind,description,price').eq('course_id', courseId).eq('is_active', true).order('sort_order').order('price').then(({ data }) => setRows(data ?? [])); }, [courseId]);
+  if (!rows.length) return null;
+  return (
+    <div className="mt-5">
+      <p className="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">Ways to study</p>
+      <div className="space-y-2">{rows.map((o) => (
+        <div key={o.id} className="flex items-center gap-3 p-3 rounded-xl border border-slate-200">
+          <div className="flex-1"><p className="font-bold text-slate-800 text-sm">{o.name}</p>{o.description && <p className="text-[11px] text-slate-500">{o.description}</p>}</div>
+          <Price className="font-black text-slate-900 text-right" amount={o.price} />
+        </div>
+      ))}</div>
+    </div>
   );
 }

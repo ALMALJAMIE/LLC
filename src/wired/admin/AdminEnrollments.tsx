@@ -10,11 +10,11 @@ import { DemoNotice, Field, Modal, Spinner, StatusPill, btnGhost, btnPrimary, in
 export type AdmEnrollment = {
   id: number; status: string; progress: number; source: string; note: string | null; created_at: string; course_id: number; batch_id: number | null;
   student: { id: string; full_name: string; email: string; student_no: string | null; phone: string | null } | null;
-  course: { title: string; code: string; price: number } | null; batch: { name: string } | null;
+  course: { title: string; code: string; price: number } | null; batch: { name: string } | null; option?: { name: string } | null;
   payments: { id: number; amount: number; currency: string; status: string; receipt_url: string | null; reference: string | null; method?: string | null }[];
 };
 
-export const ENROLL_SELECT = 'id,status,progress,source,note,created_at,course_id,batch_id, student:profiles!enrollments_student_id_fkey(id,full_name,email,student_no,phone), course:courses(title,code,price), batch:batches(name), payments(id,amount,currency,status,receipt_url,reference,method)';
+export const ENROLL_SELECT = 'id,status,progress,source,note,created_at,course_id,batch_id, student:profiles!enrollments_student_id_fkey(id,full_name,email,student_no,phone), course:courses(title,code,price), batch:batches(name), option:course_options(name), payments(id,amount,currency,status,receipt_url,reference,method)';
 
 export async function notify(user_id: string, title: string, body?: string, link?: string) {
   await supabase.from('notifications').insert({ user_id, title, body: body ?? null, link: link ?? null });
@@ -63,7 +63,7 @@ export default function AdminEnrollments() {
                     <StatusPill status={e.status} />
                   </div>
                   <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
-                    <p className="font-bold text-slate-800 flex items-center gap-2"><BookOpen size={14} className="text-orange-500" />{e.course?.title}</p>
+                    <p className="font-bold text-slate-800 flex items-center gap-2"><BookOpen size={14} className="text-orange-500" />{e.course?.title}{e.option && <span className="text-[10px] font-black uppercase text-indigo-600">{e.option.name}</span>}</p>
                     <p className="text-slate-500 flex items-center gap-2"><Calendar size={14} />{e.batch?.name ?? 'No Batch Assigned'}</p>
                     <p className="text-slate-500 flex items-center justify-between"><span>Payment</span><span className="font-bold">{e.payments.length ? <StatusPill status={e.payments[0].status} /> : Number(e.course?.price) ? 'Not submitted' : 'Free'}</span></p>
                   </div>
@@ -122,7 +122,7 @@ export function ManageEnrollment({ e, onClose, onDone }: { e: AdmEnrollment; onC
           </div>
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
             <p className="text-[10px] font-bold uppercase text-slate-400">Course</p>
-            <p className="font-bold text-slate-900">{e.course?.title} <span className="text-xs text-slate-400">({e.course?.code})</span></p>
+            <p className="font-bold text-slate-900">{e.course?.title} <span className="text-xs text-slate-400">({e.course?.code})</span>{e.option ? ` · ${e.option.name}` : ''}</p>
             <p className="text-xs text-slate-500">Requested {fmtDate(e.created_at)} · source: {e.source} · status: <StatusPill status={e.status} /></p>
           </div>
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">

@@ -1,4 +1,5 @@
-import { askConfirm, askText } from '../../components/dialogs';
+import CheckinQR from '../../components/CheckinQR';
+import { askConfirm } from '../../components/dialogs';
 import { useEffect, useMemo, useState } from 'react';
 import QRCode from 'qrcode';
 import { Check, ChevronDown, ChevronUp, Clock, Globe, Loader2, Mail, MapPin, MessageCircle, Plus, QrCode, Send, Trash2, Users, Video } from 'lucide-react';
@@ -154,9 +155,6 @@ export function InstructorLiveAttendance() {
 function AttendanceSheet({ s, onClose }: { s: Sess; onClose: () => void }) {
   const roster = useRoster([s.batch_id]);
   const att = useData<{ student_id: string; status: string }[]>(() => supabase.from('attendance').select('student_id,status').eq('session_id', s.id));
-  const [img, setImg] = useState('');
-  const url = `${location.origin}${import.meta.env.BASE_URL}student/live-attendance?code=${s.qr_token}`;
-  useEffect(() => { QRCode.toDataURL(url, { width: 480, margin: 1, color: { dark: '#0b1a3a' } }).then(setImg); }, [url]);
   useEffect(() => { const t = setInterval(att.reload, 8000); return () => clearInterval(t); }, [att.reload]);
   const mark = async (sid: string, status: string) => {
     const { error } = await supabase.from('attendance').upsert({ session_id: s.id, student_id: sid, status }, { onConflict: 'session_id,student_id' });
@@ -167,9 +165,7 @@ function AttendanceSheet({ s, onClose }: { s: Sess; onClose: () => void }) {
     <Modal open onClose={onClose} title={`${s.title} · ${hm(s.starts_at)}`} wide>
       <div className="grid md:grid-cols-2 gap-6">
         <div className="text-center">
-          {img && <img src={img} alt="QR" className="mx-auto w-60 h-60 rounded-2xl border border-slate-100" />}
-          <p className="text-3xl font-black tracking-[0.3em] font-mono mt-3">{s.qr_token}</p>
-          <p className="text-xs text-slate-400 mt-2">Students scan or type this code. It works from 15 min before the class until it ends.</p>
+          <CheckinQR sessionId={s.id} />
           <p className="mt-4 text-sm font-bold text-emerald-600">{present} / {roster.data?.length ?? 0} checked in</p>
         </div>
         <div className="max-h-96 overflow-y-auto custom-scrollbar divide-y divide-slate-100 border border-slate-100 rounded-2xl">

@@ -408,6 +408,7 @@ export function BillingSettings() {
       rates[m[1].toUpperCase()] = Number(m[2]);
     }
     if (b.taxRate < 0 || b.taxRate > 50) return toast.err('Tax rate must be between 0 and 50.');
+    if (!(b.paymentWindowHours >= 1)) return toast.err('The payment deadline must be at least 1 hour.');
     setBusy(true);
     const { error } = await supabase.from('site_settings').upsert({ key: 'billing', value: { ...b, fx: rates }, updated_at: new Date().toISOString() });
     setBusy(false);
@@ -426,6 +427,7 @@ export function BillingSettings() {
           <Field label="Tax name (e.g. SST)"><input className={inputCls} value={b.taxLabel} onChange={(e) => set('taxLabel', e.target.value)} /></Field>
           <Field label="Tax rate %" hint="0 = no tax. Added on top of prices at checkout."><input type="number" className={inputCls} value={b.taxRate} onChange={(e) => set('taxRate', Number(e.target.value))} /></Field>
           <Field label="Refund window (days)" hint="Students can ask for a refund within this many days of paying."><input type="number" className={inputCls} value={b.refundDays} onChange={(e) => set('refundDays', Number(e.target.value))} /></Field>
+          <Field label="Payment deadline (hours)" hint="An unpaid order holds the seat this long; then it is cancelled if no receipt was sent."><input type="number" className={inputCls} value={b.paymentWindowHours} onChange={(e) => set('paymentWindowHours', Number(e.target.value))} /></Field>
           <Field label="Exchange rates (1 USD =)" hint="One per line, e.g. MYR=4.45. Used only to show approximate local prices."><textarea rows={6} className={`${inputCls} font-mono`} value={fx} onChange={(e) => setFx(e.target.value)} data-no-i18n /></Field>
         </div>
         <label className="flex items-start gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-100 text-sm"><input type="checkbox" className="mt-1 accent-orange-500" checked={b.privateNeedsCredit} onChange={(e) => set('privateNeedsCredit', e.target.checked)} /><span><b>Private sessions need a credit</b><br /><span className="text-slate-500">When on, each private-session booking uses one session from a package or plan. When off, students with an active course book for free.</span></span></label>

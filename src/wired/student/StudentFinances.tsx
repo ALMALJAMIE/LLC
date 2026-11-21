@@ -29,8 +29,10 @@ export default function StudentFinances() {
     if (u.get('cancelled')) toast.err('Payment cancelled. You can pay later from this page.');
     if (u.get('paid') || u.get('cancelled')) history.replaceState(null, '', location.pathname);
   }, []);
-  const { data, loading, reload } = useData<Payment[]>(() =>
-    supabase.from('payments').select('*, enrollment:enrollments(course:courses(title,code)), discount_code:discount_codes(code)').eq('student_id', user!.id).order('created_at', { ascending: false }));
+  const { data, loading, reload } = useData<Payment[]>(async () => {
+    await supabase.rpc('expire_unpaid');
+    return supabase.from('payments').select('*, enrollment:enrollments(course:courses(title,code)), discount_code:discount_codes(code)').eq('student_id', user!.id).order('created_at', { ascending: false });
+  });
   const refunds = useData<Refund[]>(() => supabase.from('refund_requests').select('*').eq('student_id', user!.id).order('created_at', { ascending: false }));
   const list = useMemo(() => (data ?? []).filter((p) =>
     `${titleOf(p)} ${p.invoice_no} ${p.amount}`.toLowerCase().includes(q.toLowerCase())), [data, q]);
@@ -86,7 +88,8 @@ export default function StudentFinances() {
                     <td className="px-2 sm:px-3 py-3 text-slate-600">{fmtDateTime(p.paid_at ?? p.created_at)}</td>
                     <td className="px-2 sm:px-3 py-3"><p className="font-bold text-slate-800">{money(p.amount, p.currency)}</p>
                       {Number(p.discount) > 0 && <p className="text-[11px] text-emerald-600 font-semibold">{`Saved ${money(p.discount, p.currency)}`}{p.discount_code ? ` · ${p.discount_code.code}` : ''}</p>}
-                      {Number(p.refunded_amount) > 0 && <p className="text-[11px] text-red-500 font-semibold">{`Refunded ${money(p.refunded_amount, p.currency)}`}</p>}</td>
+                      {Number(p.refunded_amount) > 0 && <p className="text-[11px] text-red-500 font-semibold">{`Refunded ${money(p.refunded_amount, p.currency)}`}</p>}
+                      {canRefund(p) && p.paid_at && <p className="text-[11px] text-slate-400">{`Refund possible until ${fmtDate(new Date(new Date(p.paid_at).getTime() + billing.refundDays * 86400000).toISOString())}`}</p>}</td>
                     <td className="px-2 sm:px-3 py-3"><StatusPill status={p.status} />{p.status === 'pending' && p.receipt_url && <p className="text-[10px] text-slate-400 mt-1">Being checked</p>}</td>
                     <td className="px-2 sm:px-3 py-3 text-right space-x-1 whitespace-nowrap">
                       {p.status === 'pending' && !p.receipt_url && <button onClick={() => setPaying(p)} className="px-3 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold">Pay now</button>}

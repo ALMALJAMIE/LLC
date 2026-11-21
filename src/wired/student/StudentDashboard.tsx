@@ -3,7 +3,7 @@ import PlacementRequired from '../../components/PlacementRequired';
 import { usePlacementDone } from '../../lib/placement';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Award, Bell, ChartColumn, CircleCheck, CirclePlay, Clock, CreditCard, Layers, PenTool, User, Zap } from 'lucide-react';
+import { Award, Bell, ChartColumn, CircleCheck, CirclePlay, Clock, CreditCard, GraduationCap, Layers, PenTool, User, Zap } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { fmtDate, money, useData } from '../../lib/db';
@@ -18,21 +18,23 @@ type Overview = {
   payments: { id: number; amount: number; currency: string; status: string; created_at: string; enrollment: { course: { title: string } | null } | null }[];
   sessions: ClassSession[];
   notes: { id: number; title: string; body: string | null; created_at: string }[];
+  level: { name: string; cefr: string | null } | null;
 };
 
 async function load(uid: string) {
-  const [en, rs, ce, pa, no] = await Promise.all([
+  const [en, rs, ce, pa, no, lv] = await Promise.all([
     supabase.from('enrollments').select('id,status,batch_id,course_id, course:courses(title,code), batch:batches(code,name, instructor:profiles(full_name))').eq('student_id', uid).in('status', ['active', 'pending', 'completed']),
     supabase.from('exam_results').select('score, exam:exams(total_marks)').eq('student_id', uid).eq('status', 'graded'),
     supabase.from('certificates').select('id', { count: 'exact', head: true }).eq('student_id', uid),
     supabase.from('payments').select('id,amount,currency,status,created_at, enrollment:enrollments(course:courses(title))').eq('student_id', uid).order('created_at', { ascending: false }).limit(4),
     supabase.from('notifications').select('id,title,body,created_at').eq('read', false).order('created_at', { ascending: false }).limit(4),
+    supabase.from('profiles').select('level:levels(name,cefr)').eq('id', uid).maybeSingle(),
   ]);
   const enrollments = (en.data ?? []) as unknown as Overview['enrollments'];
   const ids = enrollments.filter((e) => e.status === 'active' && e.batch_id).map((e) => e.batch_id!) ;
   const ss = await supabase.from('class_sessions').select('*').in('batch_id', ids.length ? ids : [0]).gte('starts_at', new Date(Date.now() - 7 * 864e5).toISOString()).order('starts_at').limit(200);
   return {
-    data: { enrollments, results: (rs.data ?? []) as unknown as Overview['results'], certs: ce.count ?? 0, payments: (pa.data ?? []) as unknown as Overview['payments'], sessions: (ss.data ?? []) as ClassSession[], notes: no.data ?? [] },
+    data: { enrollments, results: (rs.data ?? []) as unknown as Overview['results'], certs: ce.count ?? 0, payments: (pa.data ?? []) as unknown as Overview['payments'], sessions: (ss.data ?? []) as ClassSession[], notes: no.data ?? [], level: ((lv.data as unknown as { level: Overview['level'] } | null)?.level) ?? null },
     error: en.error ?? null,
   };
 }
@@ -49,6 +51,7 @@ export default function StudentDashboard() {
   const first = user.name.split(' ')[0];
 
   const STATS = [
+    { v: data?.level ? `${data.level.name}${data.level.cefr ? ` · ${data.level.cefr}` : ''}` : placed ? '—' : 'Test first', l: 'My Level', icon: GraduationCap, tint: 'text-emerald-600', bg: 'bg-emerald-50' },
     { v: active.length, l: 'Active Batches', icon: Layers, tint: 'text-slate-800', bg: 'bg-slate-100' },
     { v: `${avg}%`, l: 'Avg Score', icon: ChartColumn, tint: 'text-[#e9a823]', bg: 'bg-orange-50' },
     { v: completed, l: 'Completed Courses', icon: CircleCheck, tint: 'text-[#f59e0b]', bg: 'bg-yellow-50' },
@@ -87,7 +90,7 @@ export default function StudentDashboard() {
                 </div>
               </div>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
               {STATS.map(({ v, l, icon: I, tint, bg }) => (
                 <div key={l} className="bg-white rounded-4xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-slate-100 relative overflow-hidden group cursor-default">
                   <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity duration-500 ${tint}`}><I size={100} className="transform rotate-12 translate-x-4 -translate-y-4" /></div>

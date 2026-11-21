@@ -1,11 +1,13 @@
+import { rememberReferral } from '../../lib/referral';
 import PasswordInput from '../../components/PasswordInput';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Globe, Loader2, Lock, Mail, MailCheck, Phone, User } from 'lucide-react';
 import AuthShell, { authBtn, authInput } from './AuthShell';
 import { supabase } from '../../lib/supabase';
 
 export default function Register() {
+  useEffect(() => { rememberReferral(new URLSearchParams(location.search).get('ref')); }, []);
   const [f, setF] = useState({ full_name: '', email: '', phone: '', country: 'Malaysia', password: '', confirm: '', company: '' });
   const [agent, setAgent] = useState(() => new URLSearchParams(location.search).get('as') === 'agent');
   const [error, setError] = useState('');
@@ -66,4 +68,11 @@ export default function Register() {
       <p className="text-sm text-slate-500 text-center mt-6">Already have an account? <Link to="/login" className="font-bold text-indigo-600 hover:text-orange-500">Sign in</Link></p>
     </AuthShell>
   );
+}
+
+/** /r/CODE — an agent's referral link: remember the agent, then go to sign-up. */
+export function ReferralLink() {
+  const code = location.pathname.split('/r/')[1]?.split(/[/?#]/)[0];
+  useEffect(() => { rememberReferral(code); location.replace(`${import.meta.env.BASE_URL}register?ref=${encodeURIComponent(code ?? '')}`); }, [code]);
+  return null;
 }

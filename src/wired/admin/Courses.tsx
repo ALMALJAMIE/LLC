@@ -1,16 +1,19 @@
 import { BookOpen, Clock, Globe, Layers, MapPin, Users } from 'lucide-react';
+import { useState } from 'react';
 import EntityGrid from './EntityGrid';
+import CourseOptionsEditor from './CourseOptions';
 import { useOptions } from './options';
 import { fmtDate, money } from '../../lib/db';
 import { CoverImg } from '../../components/media';
 
-type Course = { id: number; code: string; title: string; description: string | null; category_id: number | null; level_id: number | null; units_count: number; duration_weeks: number | null; delivery: string; price: number; currency: string; status: string; category: { name: string } | null; level: { name: string } | null };
+type Course = { id: number; code: string; title: string; description: string | null; category_id: number | null; level_id: number | null; units_count: number; duration_weeks: number | null; delivery: string; price: number; currency: string; status: string; category: { name: string } | null; level: { name: string } | null; course_options?: { id: number }[] };
 
 export function AdminCourses() {
+  const [opts, setOpts] = useState<Course | null>(null);
   const cats = useOptions('categories', 'name');
   const lvls = useOptions('levels', 'name', { order: 'sort_order' });
-  return (
-    <EntityGrid<Course> table="courses" select="*, category:categories(name), level:levels(name)" order="code" badge="Curriculum Management" title="Course Directory" illus="courses" addLabel="Create New Course"
+  return (<>
+    <EntityGrid<Course> table="courses" select="*, category:categories(name), level:levels(name), course_options(id)" order="code" badge="Curriculum Management" title="Course Directory" illus="courses" addLabel="Create New Course"
       subtitle="Create, manage, and organize your educational content."
       defaults={{ status: 'published', delivery: 'online', currency: 'USD', price: 0, units_count: 8 }}
       fields={[
@@ -37,9 +40,11 @@ export function AdminCourses() {
             <span className="flex items-center gap-1">{r.delivery === 'face_to_face' ? <MapPin size={12} /> : <Globe size={12} />}{r.delivery.replace(/_/g, ' ')}</span>
           </div>
           <p className="mt-2 text-sm font-extrabold text-slate-800">{Number(r.price) ? money(r.price, r.currency) : 'Free'} <span className="text-xs font-medium text-slate-400">· {r.level?.name ?? 'All levels'}</span></p>
+          <button onClick={(e) => { e.stopPropagation(); setOpts(r); }} className="mt-3 w-full py-2 rounded-xl border border-slate-200 hover:border-indigo-300 text-xs font-bold text-indigo-600">{r.course_options?.length ? `Study options (${r.course_options.length})` : 'Add study options'}</button>
         </>
       )} />
-  );
+    {opts && <CourseOptionsEditor course={opts} onClose={() => setOpts(null)} />}
+  </>);
 }
 
 type Batch = { id: number; code: string; name: string; course_id: number; session_id: number | null; instructor_id: string | null; start_date: string | null; end_date: string | null; capacity: number; mode: string; status: string; course: { title: string } | null; instructor: { full_name: string } | null; enrollments: { count: number }[] };

@@ -5,6 +5,7 @@ import { ChevronDown, Menu, Type } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Notifications from './Notifications';
 import { ConsentGate } from '../../wired/shared/Privacy';
+import { useClaimReferral } from '../../lib/referral';
 import { useAuth } from '../../lib/auth';
 import { ROLE_HOME, ROLE_LABEL } from '../../lib/nav';
 import { BrandLockup } from '../media';
@@ -45,6 +46,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
 
 export default function PortalLayout({ children, header = true }: { children: ReactNode; header?: boolean }) {
   const [open, setOpen] = useState(false);
+  useClaimReferral();
   return (
     <div className="flex h-screen w-full bg-[#fafafa] overflow-hidden font-sans relative">
       <Sidebar open={open} onClose={() => setOpen(false)} />

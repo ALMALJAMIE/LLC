@@ -1,3 +1,4 @@
+import { CurrencyPicker } from '../../lib/price';
 import { usePublished } from './Content';
 import LangToggle from '../../components/LangToggle';
 import { useState, type ReactNode } from 'react';
@@ -29,6 +30,7 @@ export function SiteNav() {
           ))}
         </nav>
         <div className="hidden lg:flex items-center gap-2">
+          <CurrencyPicker compact className="!py-1.5" />
           <LangToggle />
           {user ? <Link to={ROLE_HOME[user.role]} className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-lg shadow-indigo-200">My Portal</Link> : <>
             <Link to="/login" className="px-4 py-2.5 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50">Sign in</Link>

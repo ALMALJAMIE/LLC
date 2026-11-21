@@ -60,6 +60,7 @@ export const WIRED: Record<string, Partial<Record<Role, C>>> = {
   '/agent/contract': { agent: named(() => import('./agent/AgentPages'), 'AgentContract') },
   '/agent/programmes': { agent: named(() => import('./agent/AgentPages'), 'AgentProgrammes') },
   '/agent/timetable': { agent: named(() => import('./agent/AgentPages'), 'AgentTimetable') },
+  '/agent/referrals': { agent: lazy(() => import('./agent/Referrals')) },
   '/agent/enroll-student': { agent: named(() => import('./agent/AgentPages'), 'AgentEnrollStudent') },
   '/agent/enrollments': { agent: named(() => import('./agent/AgentPages'), 'AgentEnrollments') },
   '/agent/earnings': { agent: named(() => import('./agent/AgentPages'), 'AgentEarnings') },

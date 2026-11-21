@@ -8,10 +8,11 @@ import ar6 from './ar6';
 import ar7 from './ar7';
 import ar8 from './ar8';
 import ar9 from './ar9';
+import ar10 from './ar10';
 
 export type Lang = 'en' | 'ar';
 const KEY = 'llc-lang';
-const AR: Record<string, string> = { ...ar1, ...ar2, ...ar3, ...ar4, ...ar5, ...ar6, ...ar7, ...ar8, ...ar9 };
+const AR: Record<string, string> = { ...ar1, ...ar2, ...ar3, ...ar4, ...ar5, ...ar6, ...ar7, ...ar8, ...ar9, ...ar10 };
 
 // Status / enum words, matched case-insensitively ("ACTIVE", "Active", "face_to_face"…)
 const WORDS: Record<string, string> = {
@@ -30,6 +31,15 @@ const WORDS: Record<string, string> = {
 
 // Dynamic text: patterns tried when there is no exact match.
 const PATTERNS: [RegExp, (...m: string[]) => string][] = [
+  [/^Study options \((\d+)\)$/, (_, n) => `خيارات الدراسة (${n})`],
+  [/^Study options · (.+)$/, (_, a) => `خيارات الدراسة · ${a}`],
+  [/^From (.+)$/, (_, a) => `ابتداءً من ${a}`],
+  [/^(\d+) seats left$/, (_, n) => `متبقٍ ${n} مقاعد`],
+  [/^joined (.+)$/, (_, d) => `سجّل في ${d}`],
+  [/^Refund possible until (.+)$/, (_, d) => `يمكن طلب الاسترداد حتى ${d}`],
+  [/^No receipt yet\? Place the order now and send the receipt from Payment History within (\d+) hours\. Your seat is held until then\.$/, (_, n) => `لا يوجد إيصال بعد؟ أكّد الطلب الآن وأرسل الإيصال من سجل المدفوعات خلال ${n} ساعة. مقعدك محجوز حتى ذلك الوقت.`],
+  [/^Order placed\. Pay and send your receipt from Payment History before (.+) — your seat is held until then\.$/, (_, d) => `تم الطلب. ادفع وأرسل الإيصال من سجل المدفوعات قبل ${d}، ومقعدك محجوز حتى ذلك الوقت.`],
+  [/^Delete the option "(.+)"\? Students already enrolled keep their place\.$/, (_, a) => `حذف الخيار «${a}»؟ الطلاب المسجلون يحتفظون بأماكنهم.`],
   [/^Due (.+)$/, (_, d) => `مستحق في ${d}`],
   [/^Saved (.+?)( · (.+))?$/, (_, a, _b, c) => `وفّرت ${a}${c ? ` · ${c}` : ''}`],
   [/^Refunded (.+)$/, (_, a) => `مُسترد ${a}`],

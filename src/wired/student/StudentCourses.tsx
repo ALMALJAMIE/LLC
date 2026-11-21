@@ -1,12 +1,13 @@
 import PlacementRequired from '../../components/PlacementRequired';
 import { usePlacementDone } from '../../lib/placement';
 import PayBox from '../../components/PayBox';
+import { OPTION_KINDS, type CourseOption } from '../admin/CourseOptions';
 import { CurrencyPicker, Price } from '../../lib/price';
 import { useMemo, useState } from 'react';
 import { BookOpen, CalendarDays, ChevronRight, Clock, Funnel, Globe, Layers, MapPin, Search, Users } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
-import { fmtDate, useData } from '../../lib/db';
+import { fmtDate, money, useData } from '../../lib/db';
 
 import { CoverImg, Illus } from '../../components/media';
 import { DemoNotice, Field, Modal, Spinner, StatusPill } from '../../components/ui';
@@ -95,6 +96,16 @@ function CourseDetails({ course: c, status, onClose, onDone }: { course: Course;
     supabase.from('batches').select('*, instructor:profiles(full_name)').eq('course_id', c.id).in('status', ['upcoming', 'active']).order('start_date'));
   const [batchId, setBatchId] = useState<number | ''>('');
   const placed = usePlacementDone();
+  const options = useData<CourseOption[]>(() => supabase.from('course_options').select('*').eq('course_id', c.id).eq('is_active', true).order('sort_order').order('price'), [c.id]);
+  const seats = useData<Record<number, number>>(async () => {
+    const out: Record<number, number> = {};
+    for (const b of batches.data ?? []) { const { data } = await supabase.rpc('batch_seats_taken', { p_batch: b.id }); out[b.id] = Number(data ?? 0); }
+    return { data: out, error: null };
+  }, [batches.data]);
+  const [optId, setOptId] = useState<number | null>(null);
+  const opt = options.data?.find((o) => o.id === optId);
+  const hasOptions = !!options.data?.length;
+  const showBatches = !hasOptions || !!opt?.needs_batch;
 
   return (
     <Modal open onClose={onClose} title={c.title} wide>
@@ -117,30 +128,42 @@ function CourseDetails({ course: c, status, onClose, onDone }: { course: Course;
             <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100">{c.code}</span>
             {c.category && <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-orange-600 bg-orange-50 px-2.5 py-1 rounded-md border border-orange-100">{c.category.name}</span>}
             <p className="text-slate-600 text-sm leading-relaxed mt-3">{c.description}</p>
-            <Price className="block text-2xl font-extrabold text-slate-900 mt-3" amount={c.price} cur={c.currency} />
+            {hasOptions ? <p className="text-sm font-bold text-slate-500 mt-3">{`From ${money(Math.min(...options.data!.map((o) => Number(o.price))))}`}</p>
+              : <Price className="block text-2xl font-extrabold text-slate-900 mt-3" amount={c.price} cur={c.currency} />}
           </div>
 
           {!status && placed === false ? <PlacementRequired compact /> : status ? (
             <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100 text-sm text-indigo-700 flex items-center gap-2">Your request for this course: <StatusPill status={status} /></div>
           ) : (
             <>
-              <Field label="Choose a batch">
+              {hasOptions && <Field label="How do you want to study?">
+                <div className="space-y-2">{options.data!.map((o) => (
+                  <label key={o.id} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${optId === o.id ? 'border-orange-400 bg-orange-50' : 'border-slate-200 hover:border-slate-300'}`}>
+                    <input type="radio" name="option" checked={optId === o.id} onChange={() => { setOptId(o.id); if (!o.needs_batch) setBatchId(''); }} className="accent-orange-500" />
+                    <div className="flex-1 min-w-0"><p className="text-sm font-bold text-slate-800">{o.name} <span className="text-[10px] font-black uppercase text-indigo-600">{OPTION_KINDS[o.kind]}</span></p>{o.description && <p className="text-[11px] text-slate-500">{o.description}</p>}</div>
+                    <Price className="text-sm font-black text-slate-900 text-right" amount={o.price} />
+                  </label>
+                ))}</div>
+              </Field>}
+              {showBatches && <Field label="Choose a batch">
                 {batches.loading ? <Spinner label="Loading batches…" /> : (
                   <div className="space-y-2">
-                    {(batches.data ?? []).map((b) => (
-                      <label key={b.id} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${batchId === b.id ? 'border-orange-400 bg-orange-50' : 'border-slate-200 hover:border-slate-300'}`}>
-                        <input type="radio" name="batch" checked={batchId === b.id} onChange={() => setBatchId(b.id)} className="accent-orange-500" />
+                    {(batches.data ?? []).map((b) => { const full = (seats.data?.[b.id] ?? 0) >= b.capacity; const left = b.capacity - (seats.data?.[b.id] ?? 0); return (
+                      <label key={b.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${full ? 'opacity-50 cursor-not-allowed border-slate-200' : 'cursor-pointer'} ${batchId === b.id ? 'border-orange-400 bg-orange-50' : 'border-slate-200 hover:border-slate-300'}`}>
+                        <input type="radio" name="batch" disabled={full} checked={batchId === b.id} onChange={() => setBatchId(b.id)} className="accent-orange-500" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-slate-800 truncate">{b.name}</p>
                           <p className="text-[11px] text-slate-500 flex flex-wrap gap-x-3"><span className="flex items-center gap-1"><CalendarDays size={11} />{fmtDate(b.start_date)} – {fmtDate(b.end_date)}</span><span className="flex items-center gap-1"><Users size={11} />{b.instructor?.full_name ?? 'Instructor TBA'}</span></p>
                         </div>
+                        {seats.data && <span className={`text-[10px] font-black ${full ? 'text-red-500' : left <= 3 ? 'text-orange-600' : 'text-slate-400'}`}>{full ? 'Full' : `${left} seats left`}</span>}
                       </label>
-                    ))}
+                    ); })}
                     {!batches.data?.length && <p className="text-xs text-slate-400">No open batch right now — send a request and we will place you in the next one.</p>}
                   </div>
                 )}
-              </Field>
-              <PayBox kind="course" item={c.id} batch={batchId || null} label="Request Enrollment" onCancel={onClose} onDone={onDone} />
+              </Field>}
+              {hasOptions && !opt ? <p className="text-sm text-slate-400">Choose a study option to see the price.</p>
+                : <PayBox key={optId ?? 0} kind="course" item={c.id} option={optId} batch={batchId || null} label="Request Enrollment" onCancel={onClose} onDone={onDone} />}
             </>
           )}
         </div>

@@ -21,7 +21,7 @@ export type Center = typeof DEFAULTS;
 
 /** Billing settings (finance edits them); prices are always charged in USD. */
 export const BILLING_DEFAULTS = {
-  companyName: 'Language Leap Center', registrationNo: '', address: '', taxRate: 0, taxLabel: 'Tax', refundDays: 14, privateNeedsCredit: false,
+  companyName: 'Language Leap Center', registrationNo: '', address: '', taxRate: 0, taxLabel: 'Tax', refundDays: 14, privateNeedsCredit: false, paymentWindowHours: 72,
   fx: { MYR: 4.45, SAR: 3.75, AED: 3.67, EUR: 0.92, GBP: 0.79, IDR: 16000, YER: 250 } as Record<string, number>,
 };
 export type Billing = typeof BILLING_DEFAULTS;

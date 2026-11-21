@@ -1,3 +1,4 @@
+import LearningStats from './LearningStats';
 import PlacementRequired from '../../components/PlacementRequired';
 import { usePlacementDone } from '../../lib/placement';
 import { useState } from 'react';
@@ -99,6 +100,7 @@ export default function StudentDashboard() {
               ))}
             </div>
 
+            <LearningStats />
             <div>
               <div className="flex items-center justify-between mb-6"><h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2 tracking-tight"><Zap size={20} className="text-yellow-400 fill-yellow-400" /> Current Batches</h2></div>
               {(data?.enrollments ?? []).filter((e) => e.status !== 'completed').length === 0 ? (

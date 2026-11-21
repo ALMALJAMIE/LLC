@@ -80,6 +80,12 @@ export const WIRED: Record<string, Partial<Record<Role, C>>> = {
   '/instructor/lessons/:id/edit': { instructor: CurriculumBuilder },
   '/instructor/lessons/:id/view': { instructor: CurriculumPreview },
   '/admin/lessons/review': { admin: lazy(() => import('./admin/LessonApprovals')) },
+  '/student/assignments': { student: named(() => import('./shared/Homework'), 'StudentHomework') },
+  '/instructor/assignments': { instructor: named(() => import('./shared/Homework'), 'StaffHomework') },
+  '/admin/assignments': { admin: named(() => import('./shared/Homework'), 'StaffHomework') },
+  '/student/private-sessions': { student: named(() => import('./shared/PrivateSessions'), 'StudentPrivateSessions') },
+  '/instructor/private-sessions': { instructor: named(() => import('./shared/PrivateSessions'), 'StaffPrivateSessions') },
+  '/admin/private-sessions': { admin: named(() => import('./shared/PrivateSessions'), 'StaffPrivateSessions') },
   '/student/course/:id': { student: lazy(() => import('./student/CoursePlayer')) },
   '/student/assessments': { student: named(() => import('./placement/Student'), 'StudentPlacement') },
   '/student/placement/:id': { student: named(() => import('./placement/Student'), 'PlacementTake') },
@@ -136,7 +142,7 @@ for (const path of [
   '/admin-academic-session', '/admin-categories', '/admin-levels', '/admin-courses', '/admin-batches',
   '/admin-curriculum', '/admin-curriculum/:id/edit', '/admin-curriculum/:id/view', '/admin/lessons/review', '/admin/timetable', '/admin/master-timetable', '/admin/substitutes', '/admin/absence-approvals',
   '/admin-placement-tests', '/admin-placement-tests/:id/manage', '/admin-placement-tests/:id/details', '/admin/level-config', '/admin-placement-requests',
-  '/admin/exam-templates', '/admin-grading-scales', '/admin-rubrics-bank', '/admin-certificate-templates', '/admin-reviews',
+  '/admin/assignments', '/admin/private-sessions', '/admin/exam-templates', '/admin-grading-scales', '/admin-rubrics-bank', '/admin-certificate-templates', '/admin-reviews',
 ]) {
   const c = WIRED[path]?.admin;
   if (c) WIRED[path] = { ...WIRED[path], academic: c };

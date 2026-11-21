@@ -1,3 +1,4 @@
+import { useStudyHeartbeat } from './LearningStats';
 import PlacementRequired from '../../components/PlacementRequired';
 import { usePlacementDone } from '../../lib/placement';
 import { useEffect, useMemo, useState } from 'react';
@@ -16,6 +17,7 @@ type Unit = { id: number; title: string; sort_order: number; summary: string | n
 
 export default function CoursePlayer() {
   const placed = usePlacementDone();
+  useStudyHeartbeat(placed === true);
   const { id } = useParams();
   const cid = Number(id);
   const user = useAuth((s) => s.user)!;

@@ -4,10 +4,11 @@ import ar2 from './ar2';
 import ar3 from './ar3';
 import ar4 from './ar4';
 import ar5 from './ar5';
+import ar6 from './ar6';
 
 export type Lang = 'en' | 'ar';
 const KEY = 'llc-lang';
-const AR: Record<string, string> = { ...ar1, ...ar2, ...ar3, ...ar4, ...ar5 };
+const AR: Record<string, string> = { ...ar1, ...ar2, ...ar3, ...ar4, ...ar5, ...ar6 };
 
 // Status / enum words, matched case-insensitively ("ACTIVE", "Active", "face_to_face"…)
 const WORDS: Record<string, string> = {
@@ -40,6 +41,18 @@ const PATTERNS: [RegExp, (...m: string[]) => string][] = [
   [/^(\d+) min$/, (_, n) => `${n} د`],
   [/^(\d+) weeks?$/, (_, n) => `${n} أسابيع`],
   [/^(\d+) days?$/, (_, n) => `${n} أيام`],
+  [/^(\d+) days?$/, (_, n) => `${n} يوم`],
+  [/^(\d+) min$/, (_, n) => `${n} د`],
+  [/^Due (.+)$/, (_, d) => `التسليم ${d}`],
+  [/^(\d+) booked$/, (_, n) => `${n} محجوزة`],
+  [/^(\d+) free times published$/, (_, n) => `نُشر ${n} وقتًا متاحًا`],
+  [/^To do \((\d+)\)$/, (_, n) => `للإنجاز (${n})`],
+  [/^Handed in \((\d+)\)$/, (_, n) => `مُسلّمة (${n})`],
+  [/^Latest: (.+)$/, (_, n) => `الأحدث: ${n}`],
+  [/^New badge: (.+)$/, (_, n) => `وسام جديد: ${n}`],
+  [/^Your mark: (.+)$/, (_, n) => `درجتك: ${n}`],
+  [/^Marks \(out of (.+)\)$/, (_, n) => `الدرجة (من ${n})`],
+  [/^with (.+)$/, (_, n) => `مع ${n}`],
   [/^Words · (\d+)$/, (_, n) => `الكلمات · ${n}`],
   [/^Questions · (\d+)$/, (_, n) => `الأسئلة · ${n}`],
   [/^(\d+) words$/, (_, n) => `${n} كلمة`],

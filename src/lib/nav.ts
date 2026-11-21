@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  Award, BookOpen, BrainCircuit, Building2, Calendar, CalendarRange, ChartNoAxesColumn, CircleCheckBig, ClipboardCheck,
+  Award, BookOpen, CalendarPlus, BrainCircuit, Building2, Calendar, CalendarRange, ChartNoAxesColumn, CircleCheckBig, ClipboardCheck,
   ClipboardList, Clock, CreditCard, DollarSign, FileQuestionMark, FileText, GraduationCap, Inbox, Layers, LayoutDashboard,
   ListChecks, ListOrdered, MessageCircle, MonitorPlay, NotebookPen, PenLine, PenTool, Percent, ShieldCheck, ShoppingBag,
   SquareCheckBig, SquarePen, Star, Tag, UserCog, UserPlus, Users, Video, Wallet,
@@ -31,6 +31,8 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: 'My Attendance', icon: Calendar, to: '/student/attendance' },
     { label: 'Live Attendance (QR)', icon: MonitorPlay, to: '/student/live-attendance' },
     { label: 'Medical Leave & MC', icon: FileText, to: '/student/absence-excuse' },
+    { label: 'My Homework', icon: ClipboardList, to: '/student/assignments' },
+    { label: 'Private Sessions', icon: CalendarPlus, to: '/student/private-sessions' },
     { label: 'My Exams', icon: FileQuestionMark, to: '/student/exams' },
     { label: 'Checked Results', icon: CircleCheckBig, to: '/student/exam-results' },
     { label: 'My Certificates', icon: Award, to: '/student/certificates' },
@@ -55,6 +57,8 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: 'Live Attendance (QR)', icon: MonitorPlay, to: '/instructor/live-attendance' },
     { label: 'Lessons', icon: Video, to: '/instructor/lessons' },
     { label: 'New Students', icon: UserPlus, to: '/instructor/new-students' },
+    { label: 'Homework', icon: ClipboardList, to: '/instructor/assignments' },
+    { label: 'Private Sessions', icon: CalendarPlus, to: '/instructor/private-sessions' },
     { label: 'Manage Exams', icon: SquarePen, to: '/instructor/exams' },
     { label: 'Grading Console', icon: SquareCheckBig, to: '/instructor/grading' },
     { label: 'Class Reports', icon: ChartNoAxesColumn, to: '/instructor/reports' },
@@ -123,6 +127,8 @@ export const NAV: Record<Role, NavItem[]> = {
         { label: 'Master Schedule', icon: CalendarRange, to: '/admin/master-timetable' },
         { label: 'Substitute Requests', icon: UserCog, to: '/admin/substitutes' },
         { label: 'Medical Leave & MC', icon: FileText, to: '/admin/absence-approvals' },
+        { label: 'Homework', icon: ClipboardList, to: '/admin/assignments' },
+        { label: 'Private Sessions', icon: CalendarPlus, to: '/admin/private-sessions' },
       ],
     },
     {
@@ -159,6 +165,8 @@ export const NAV: Record<Role, NavItem[]> = {
         { label: 'Master Schedule', icon: CalendarRange, to: '/admin/master-timetable' },
         { label: 'Substitute Requests', icon: UserCog, to: '/admin/substitutes' },
         { label: 'Medical Leave & MC', icon: FileText, to: '/admin/absence-approvals' },
+        { label: 'Homework', icon: ClipboardList, to: '/admin/assignments' },
+        { label: 'Private Sessions', icon: CalendarPlus, to: '/admin/private-sessions' },
         { label: 'Placement Tests', icon: BrainCircuit, to: '/admin-placement-tests' },
         { label: 'Test Level Config', icon: ListOrdered, to: '/admin/level-config' },
         { label: 'Rubric Bank', icon: ListChecks, to: '/admin-rubrics-bank' },

@@ -176,6 +176,7 @@ function PostCard({ p, onChange }: { p: Post; onChange: () => void }) {
       <div className="flex gap-4 mt-4 pt-3 border-t border-slate-50 text-sm">
         <button onClick={like} className={`flex items-center gap-1.5 font-semibold ${liked ? 'text-red-500' : 'text-slate-400 hover:text-red-500'}`}><Heart size={16} className={liked ? 'fill-red-500' : ''} />{p.community_likes.length}</button>
         <button onClick={() => setShowC(!showC)} className="flex items-center gap-1.5 font-semibold text-slate-400 hover:text-indigo-600"><MessageCircle size={16} />{comments.length}</button>
+        {p.author_id !== user.id && <span className="ml-auto self-center"><ReportPostButton postId={p.id} /></span>}
       </div>
       {showC && (
         <div className="mt-3 space-y-2">
@@ -190,3 +191,18 @@ function PostCard({ p, onChange }: { p: Post; onChange: () => void }) {
     </article>
   );
 }
+
+/** Button shown under a community post. */
+function ReportPostButton({ postId }: { postId: number }) {
+  const user = useAuth((s) => s.user)!;
+  const report = async () => {
+    if (user.demo) return;
+    const reason = await askText('Why are you reporting this post? (for example spam, rude, wrong information)');
+    if (reason === null) return;
+    if (reason.trim().length < 3) return toast.err('Please write a short reason.');
+    const { error } = await supabase.from('community_reports').insert({ post_id: postId, reporter_id: user.id, reason: reason.trim() });
+    if (error) toast.err(error.code === '23505' ? 'You already reported this post.' : error.message); else toast.ok('Thank you. A moderator will look at it.');
+  };
+  return <button onClick={report} className="text-[11px] font-bold text-slate-400 hover:text-red-500">Report</button>;
+}
+

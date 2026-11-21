@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Award, BookOpen, CalendarPlus, DoorOpen, BrainCircuit, Building2, Calendar, CalendarRange, ChartNoAxesColumn, CircleCheckBig, ClipboardCheck,
   ClipboardList, Clock, CreditCard, DollarSign, FileQuestionMark, FileText, GraduationCap, Inbox, Layers, LayoutDashboard,
-  ListChecks, ListOrdered, MessageCircle, MonitorPlay, NotebookPen, PenLine, PenTool, Percent, ShieldCheck, ShoppingBag,
+  LifeBuoy, ListChecks, ListOrdered, Flag, Lock, MessageCircle, MonitorPlay, NotebookPen, PenLine, PenTool, Percent, ShieldCheck, ShoppingBag,
   SquareCheckBig, SquarePen, Star, Tag, UserCog, UserPlus, Users, Video, Wallet,
 } from 'lucide-react';
 
@@ -40,6 +40,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: 'Language Course Reports', icon: Award, to: '/student/language-report' },
     { label: 'Class Progress Reports', icon: ChartNoAxesColumn, to: '/student/class-report' },
     { label: 'Payment History', icon: CreditCard, to: '/student/finances' },
+    { label: 'Help Desk', icon: LifeBuoy, to: '/help-desk' },
     { label: 'My Profile', icon: UserCog, to: '/manage-profile' },
   ],
   instructor: [
@@ -64,6 +65,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: 'Manage Exams', icon: SquarePen, to: '/instructor/exams' },
     { label: 'Grading Console', icon: SquareCheckBig, to: '/instructor/grading' },
     { label: 'Class Reports', icon: ChartNoAxesColumn, to: '/instructor/reports' },
+    { label: 'Help Desk', icon: LifeBuoy, to: '/help-desk' },
     { label: 'My Profile', icon: UserCog, to: '/manage-profile' },
   ],
   agent: [
@@ -77,6 +79,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: 'Payout History', icon: Wallet, to: '/agent/payouts' },
     { label: 'Bank Details', icon: Building2, to: '/agent/bank-details' },
     { label: 'Form Builder', icon: ClipboardList, to: '/agent/forms' },
+    { label: 'Help Desk', icon: LifeBuoy, to: '/help-desk' },
     { label: 'My Profile', icon: UserCog, to: '/manage-profile' },
   ],
   support: [
@@ -87,6 +90,9 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: 'Form Builder', icon: ClipboardList, to: '/admin/forms' },
     { label: 'Community', icon: MessageCircle, to: '/support/community' },
     { label: 'Task Manager', icon: SquareCheckBig, to: '/support/reminders' },
+    { label: 'Support Tickets', icon: LifeBuoy, to: '/support/tickets' },
+    { label: 'Reported Posts', icon: Flag, to: '/admin/community-reports' },
+    { label: 'Website Pages', icon: FileText, to: '/admin/pages' },
     { label: 'Manage Profile', icon: UserCog, to: '/manage-profile' },
   ],
   finance: [
@@ -103,6 +109,7 @@ export const NAV: Record<Role, NavItem[]> = {
         { label: 'Commission Rules', icon: Percent, to: '/admin/commission-rules' },
       ],
     },
+    { label: 'Help Desk', icon: LifeBuoy, to: '/help-desk' },
     { label: 'Manage Profile', icon: UserCog, to: '/manage-profile' },
   ],
   academic: [
@@ -149,6 +156,9 @@ export const NAV: Record<Role, NavItem[]> = {
         { label: 'Reviews', icon: Star, to: '/admin-reviews' },
       ],
     },
+    { label: 'Website Pages', icon: FileText, to: '/admin/pages' },
+    { label: 'Reported Posts', icon: Flag, to: '/admin/community-reports' },
+    { label: 'Help Desk', icon: LifeBuoy, to: '/help-desk' },
     { label: 'Manage Profile', icon: UserCog, to: '/manage-profile' },
   ],
   admin: [
@@ -206,6 +216,10 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: 'Financials', icon: DollarSign, to: '/admin-financials' },
     { label: 'Audit Logs', icon: FileText, to: '/admin-audit-logs' },
     { label: 'Website CMS', icon: PenLine, to: '/admin/cms' },
+    { label: 'Website Pages', icon: FileText, to: '/admin/pages' },
+    { label: 'Support Tickets', icon: LifeBuoy, to: '/support/tickets' },
+    { label: 'Reported Posts', icon: Flag, to: '/admin/community-reports' },
+    { label: 'Privacy Requests', icon: Lock, to: '/admin/privacy' },
     { label: 'Form Builder', icon: ClipboardList, to: '/admin/forms' },
     { label: 'Accreditations', icon: ShieldCheck, to: '/admin-accreditations' },
     { label: 'Manage Profile', icon: UserCog, to: '/manage-profile' },

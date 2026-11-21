@@ -6,10 +6,11 @@ import ar4 from './ar4';
 import ar5 from './ar5';
 import ar6 from './ar6';
 import ar7 from './ar7';
+import ar8 from './ar8';
 
 export type Lang = 'en' | 'ar';
 const KEY = 'llc-lang';
-const AR: Record<string, string> = { ...ar1, ...ar2, ...ar3, ...ar4, ...ar5, ...ar6, ...ar7 };
+const AR: Record<string, string> = { ...ar1, ...ar2, ...ar3, ...ar4, ...ar5, ...ar6, ...ar7, ...ar8 };
 
 // Status / enum words, matched case-insensitively ("ACTIVE", "Active", "face_to_face"…)
 const WORDS: Record<string, string> = {
@@ -28,6 +29,10 @@ const WORDS: Record<string, string> = {
 
 // Dynamic text: patterns tried when there is no exact match.
 const PATTERNS: [RegExp, (...m: string[]) => string][] = [
+  [/^updated (.+)$/, (_, d) => `آخر تحديث ${d}`],
+  [/^Open \((\d+)\)$/, (_, n) => `مفتوحة (${n})`],
+  [/^Waiting for user \((\d+)\)$/, (_, n) => `بانتظار المستخدم (${n})`],
+  [/^(\w+) request · (.+)$/, (_, k, r) => `طلب ${({ access: 'اطلاع', correction: 'تصحيح', deletion: 'حذف' } as Record<string, string>)[k] ?? k} · ${r}`],
   [/^(\d+) min ago$/, (_, n) => `منذ ${n} د`],
   [/^(\d+)h ago$/, (_, n) => `منذ ${n} س`],
   [/^(\d+)d ago$/, (_, n) => `منذ ${n} يوم`],

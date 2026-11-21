@@ -1,3 +1,4 @@
+import { PrivacySection } from './Privacy';
 import PasswordInput from '../../components/PasswordInput';
 import { useEffect, useRef, useState } from 'react';
 import { Calendar, Camera, Hash, KeyRound, Loader2, Mail, Save, User } from 'lucide-react';
@@ -125,6 +126,7 @@ export default function ManageProfile() {
           </div>
         </div>
       </div>
+      <PrivacySection />
       <Modal open={pwOpen} onClose={() => setPwOpen(false)} title="Change Password">
         <PasswordInput className={inputCls} placeholder="New password (8+ characters)" value={pw} onChange={(e) => setPw(e.target.value)} />
         <button onClick={changePw} className={`${btnPrimary} w-full mt-4`}>Update Password</button>

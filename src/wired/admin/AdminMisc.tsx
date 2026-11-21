@@ -41,14 +41,18 @@ export function AdminReviews() {
 }
 
 // ---------------- Certificates ----------------
-type Ce = { id: number; serial: string; title: string; issued_at: string; student: { full_name: string; email: string } | null };
+type Ce = { id: number; serial: string; title: string; issued_at: string; revoked?: boolean; revoked_reason?: string | null; student: { full_name: string; email: string } | null };
 export function AdminCertificates() {
   const user = useAuth((s) => s.user);
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
-  const { data, loading, reload } = useData<Ce[]>(() => supabase.from('certificates').select('id,serial,title,issued_at, student:profiles(full_name,email)').order('issued_at', { ascending: false }));
+  const { data, loading, reload } = useData<Ce[]>(() => supabase.from('certificates').select('id,serial,title,issued_at,revoked,revoked_reason, student:profiles(full_name,email)').order('issued_at', { ascending: false }));
   const list = (data ?? []).filter((c) => `${c.student?.full_name} ${c.serial} ${c.title}`.toLowerCase().includes(q.toLowerCase()));
-  const revoke = async (c: Ce) => { if (!await askConfirm(`Revoke ${c.serial}?`)) return; const { error } = await supabase.from('certificates').delete().eq('id', c.id); if (error) toast.err(error.message); else reload(); };
+  const revoke = async (c: Ce) => {
+    if (c.revoked) { if (!await askConfirm(`Make ${c.serial} valid again?`)) return; const { error } = await supabase.from('certificates').update({ revoked: false, revoked_reason: null }).eq('id', c.id); if (error) toast.err(error.message); else reload(); return; }
+    const reason = await askText(`Withdraw ${c.serial}? Anyone checking it will see it is no longer valid. Reason (internal):`); if (reason === null) return;
+    const { error } = await supabase.from('certificates').update({ revoked: true, revoked_reason: reason || null }).eq('id', c.id); if (error) toast.err(error.message); else { toast.ok('Certificate withdrawn'); reload(); }
+  };
   return (
     <Page>
       {user?.demo && <DemoNotice />}
@@ -61,7 +65,7 @@ export function AdminCertificates() {
           <table className="w-full text-left text-sm min-w-[640px]"><thead className="bg-slate-50 text-[11px] font-extrabold uppercase text-slate-500"><tr><th className="px-4 py-3">Student</th><th className="px-3 py-3">Certificate</th><th className="px-3 py-3">Serial</th><th className="px-3 py-3">Issued</th><th /></tr></thead>
             <tbody className="divide-y divide-slate-100">{list.map((c) => (
               <tr key={c.id}><td className="px-4 py-3"><p className="font-bold">{c.student?.full_name}</p><p className="text-[11px] text-slate-400">{c.student?.email}</p></td><td className="px-3 py-3">{c.title}</td><td className="px-3 py-3 font-mono text-xs">{c.serial}</td><td className="px-3 py-3 text-xs">{fmtDate(c.issued_at)}</td>
-                <td className="px-3 py-3 text-right"><button onClick={() => revoke(c)} className="text-xs font-bold text-red-500">Revoke</button></td></tr>
+                <td className="px-3 py-3 text-right">{c.revoked && <span className="mr-2 text-[10px] font-black uppercase text-red-500">Withdrawn</span>}<a href={`${import.meta.env.BASE_URL}verify?c=${encodeURIComponent(c.serial)}`} target="_blank" rel="noreferrer" className="mr-3 text-xs font-bold text-indigo-600">Check</a><button onClick={() => revoke(c)} className={`text-xs font-bold ${c.revoked ? 'text-emerald-600' : 'text-red-500'}`}>{c.revoked ? 'Restore' : 'Withdraw'}</button></td></tr>
             ))}{!list.length && <tr><td colSpan={5} className="p-8 text-center text-slate-400 text-xs">No certificates issued yet.</td></tr>}</tbody></table>
         </div>
       )}

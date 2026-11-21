@@ -1,3 +1,4 @@
+import { HelpArticles } from './Content';
 import { useState } from 'react';
 import { ChevronDown, Mail, MessageCircle, Phone, Search } from 'lucide-react';
 import { useCenter } from '../../lib/site';
@@ -55,6 +56,7 @@ export default function Help() {
         <a href={`mailto:${CENTER.email}`} className="bg-white rounded-4xl p-7 border border-slate-100 shadow-sm hover:shadow-lg transition-all"><span className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 grid place-items-center mb-4"><Mail size={22} /></span><p className="font-extrabold text-slate-900">Email</p><p className="text-sm text-slate-500">{CENTER.email}</p></a>
         <a href={`tel:${CENTER.phone.replace(/[^\d+]/g, '')}`} className="bg-white rounded-4xl p-7 border border-slate-100 shadow-sm hover:shadow-lg transition-all"><span className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 grid place-items-center mb-4"><Phone size={22} /></span><p className="font-extrabold text-slate-900">Call</p><p className="text-sm text-slate-500">{CENTER.phone}</p></a>
       </section>
+      <section className="max-w-5xl mx-auto px-5 pb-16"><HelpArticles /></section>
       <WhatsAppFab />
     </SiteShell>
   );

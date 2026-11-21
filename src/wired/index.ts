@@ -182,3 +182,16 @@ for (const path of ['/manage-profile', '/admin/new-students']) {
   const c = WIRED[path]?.admin;
   if (c) WIRED[path] = { ...WIRED[path], support: c };
 }
+
+// ---------------- Services: website pages, help desk, reported posts, privacy (all roles) ----------------
+{
+  const svc = (n: string) => named(() => import('./shared/Services'), n);
+  const pages = svc('WebsitePages'), desk = svc('HelpDesk'), queue = svc('TicketQueue'), reports = svc('CommunityReports'), privacy = svc('PrivacyRequests');
+  Object.assign(WIRED, {
+    '/admin/pages': { admin: pages, academic: pages, support: pages },
+    '/help-desk': { student: desk, instructor: desk, agent: desk, finance: desk, academic: desk },
+    '/support/tickets': { support: queue, admin: queue },
+    '/admin/community-reports': { admin: reports, academic: reports, support: reports },
+    '/admin/privacy': { admin: privacy },
+  });
+}

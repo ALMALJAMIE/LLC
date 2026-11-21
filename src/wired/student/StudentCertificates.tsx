@@ -1,3 +1,4 @@
+import QRCode from 'qrcode';
 import { Award, Download, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
@@ -7,8 +8,10 @@ import mark from '../../assets/llc-mark.png';
 
 type C = { id: number; serial: string; title: string; issued_at: string; course: { title: string; code: string } | null };
 
-function printCert(c: C, name: string) {
+async function printCert(c: C, name: string) {
   const w = window.open('', '_blank'); if (!w) return;
+  const verify = `${location.origin}${import.meta.env.BASE_URL}verify?c=${encodeURIComponent(c.serial)}`;
+  const qr = await QRCode.toDataURL(verify, { margin: 0, width: 160 });
   const logo = new URL(mark, location.href).href;
   w.document.write(`<!doctype html><html><head><title>${c.serial}</title><style>@page{size:A4 landscape;margin:0}body{margin:0;font-family:Georgia,serif}
   .c{width:297mm;height:210mm;box-sizing:border-box;padding:18mm;background:#fff;position:relative}
@@ -18,7 +21,7 @@ function printCert(c: C, name: string) {
   </style></head><body><div class="c"><div class="b"><img src="${logo}" style="height:70px"/><div style="font-family:Arial;font-weight:800;letter-spacing:.15em;color:#0c3d88;margin-top:6px">LANGUAGE LEAP <span style="color:#e9a823">CENTER</span></div>
   <h1>CERTIFICATE</h1><div class="m">OF COMPLETION · This is to certify that</div><div class="n">${name}</div>
   <div class="m">has successfully completed</div><div style="font-size:26px;color:#0c3d88;margin-top:8px;font-weight:bold">${c.title}</div>
-  <div class="s"><div>Issued: ${fmtDate(c.issued_at)}</div><div>Certificate No. ${c.serial}</div><div>Language Leap Center</div></div></div></div>
+  <div class="s"><div>Issued: ${fmtDate(c.issued_at)}</div><div style="text-align:center"><img src="${qr}" style="height:22mm"/><div>Certificate No. ${c.serial}</div><div style="font-size:10px">Check at ${verify.replace(/^https?:\/\//, '')}</div></div><div>Language Leap Center</div></div></div></div>
   <script>onload=()=>setTimeout(()=>print(),300)</script></body></html>`);
   w.document.close();
 }

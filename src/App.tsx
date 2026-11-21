@@ -17,6 +17,9 @@ const AgentsLanding = lazy(() => import('./pages/public/Landing').then((m) => ({
 const PublicForm = lazy(() => import('./wired/forms/Forms').then((m) => ({ default: m.PublicForm })));
 import Register from './pages/public/Register';
 import { ForgotPassword, ResetPassword } from './pages/public/ForgotPassword';
+const VerifyCertificate = lazy(() => import('./pages/public/Content').then((m) => ({ default: m.VerifyCertificate })));
+const BlogList = lazy(() => import('./pages/public/Content').then((m) => ({ default: m.BlogList })));
+const ContentPage = lazy(() => import('./pages/public/Content').then((m) => ({ default: m.ContentPage })));
 
 function Portal({ path }: { path: string }) {
   const user = useAuth((s) => s.user);
@@ -51,6 +54,12 @@ export default function App() {
         <Route path="/f/:id" element={pub(PublicForm)} />
         <Route path="/placement" element={pub(PlacementLanding)} />
         <Route path="/agents" element={pub(AgentsLanding)} />
+        <Route path="/verify" element={pub(VerifyCertificate)} />
+        <Route path="/blog" element={pub(BlogList)} />
+        <Route path="/blog/:slug" element={pub(() => <ContentPage kind="blog" />)} />
+        <Route path="/help/:slug" element={pub(() => <ContentPage kind="help" />)} />
+        <Route path="/legal/:slug" element={pub(() => <ContentPage kind="legal" />)} />
+        <Route path="/p/:slug" element={pub(() => <ContentPage kind="page" />)} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

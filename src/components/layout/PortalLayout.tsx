@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ChevronDown, Menu, Type } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Notifications from './Notifications';
+import { ConsentGate } from '../../wired/shared/Privacy';
 import { useAuth } from '../../lib/auth';
 import { ROLE_HOME, ROLE_LABEL } from '../../lib/nav';
 import { BrandLockup } from '../media';
@@ -55,6 +56,7 @@ export default function PortalLayout({ children, header = true }: { children: Re
               <button onClick={() => setOpen(true)} className="lg:hidden fixed top-4 left-4 z-30 p-2 rounded-lg bg-white border border-slate-200 text-slate-600 shadow-sm"><Menu size={20} /></button>
             )}
             <Suspense fallback={<div className="p-10 text-slate-400 text-sm">Loading…</div>}>{children}</Suspense>
+            <ConsentGate />
           </div>
         </div>
       </div>
